@@ -1,8 +1,12 @@
 package place.server;
 
+import place.PlaceBoard;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The Place server is run on the command line as:
@@ -18,6 +22,10 @@ import java.net.Socket;
 public class PlaceServer {
     /** the server socket */
     private static ServerSocket serverSocket;
+    /** the place board */
+    private static PlaceBoard placeBoard;
+    /** the users currently logged in to the server */
+    private static List<String> users;
 
     /**
      * The main method starts the server
@@ -32,6 +40,7 @@ public class PlaceServer {
             report("Starting up server");
             try {
                 serverSocket = new ServerSocket(Integer.parseInt(args[0]));
+                placeBoard = new PlaceBoard(Integer.parseInt(args[1]));
                 connectClients();
             } catch (IOException e) {
                 error(e.getMessage());
@@ -61,23 +70,38 @@ public class PlaceServer {
      * @throws IOException if a network error occurs
      */
     private static void connectClients() throws IOException {
-        int clientCount = 0;
+        users = new ArrayList<>();
         report("Waiting for clients...");
         while(true) {
             Socket clientSocket = null;
 
             clientSocket = serverSocket.accept();
 
-            clientCount++;
-            report( "New client connected [" + clientCount + "]");
+            report( "New client connected [" + users.size() + "]");
 
             ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());
 
-            report("Assigning new thread for client [" + clientCount + "]");
-            Thread t = new ClientHandler(clientSocket, networkIn, networkOut, clientCount);
-            report("Starting thread for client [" + clientCount + "]");
+            report("Assigning new thread for client [" + users.size() + "]");
+            Thread t = new ClientHandler(placeBoard, networkIn, networkOut, users.size());
+            report("Starting thread for client [" + users.size() + "]");
             t.start();
         }
     }
+
+    /**
+     * attempt to add a new user to the list of connected clients.
+     * A user can only be added if its username has not already been taken.
+     * @param user the user to add
+     * @return if the user was added to the list
+     */
+    static boolean addUser(String user) {
+        for(String u : users){
+            if(user.equals(u)){ return false; }
+        }
+        users.add(user);
+        return true;
+    }
+
+    public static void delUser(String user) { users.remove(user); }
 }

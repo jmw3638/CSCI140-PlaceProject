@@ -60,7 +60,7 @@ public class PlacePTUI implements Observer<ClientModel, PlaceTile> {
 
                 if(response.getType().equals(PlaceRequest.RequestType.LOGIN_SUCCESS)){
                     System.out.println(response.getData() + " connected to server");
-                    networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.TEST, ""));
+                    networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.TEST, "Ready for input"));
                 } else if(response.getType().equals(PlaceRequest.RequestType.LOGOUT_SUCCESS)){
                     break;
                 } else {
@@ -69,6 +69,7 @@ public class PlacePTUI implements Observer<ClientModel, PlaceTile> {
                     if(test.equals("EXIT")){
                         networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.LOGOUT, ""));
                     } else {
+                        System.out.println("\"" + test + "\" sent to server");
                         networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.TEST, test));
                     }
                 }

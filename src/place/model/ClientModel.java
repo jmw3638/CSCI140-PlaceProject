@@ -13,6 +13,8 @@ import java.util.List;
  * @author Sean Strout @ RIT CS
  */
 public class ClientModel {
+    /** the dimension of the board */
+    private int DIM;
     /** the actual board that holds the tiles */
     private PlaceBoard board;
 
@@ -36,4 +38,6 @@ public class ClientModel {
             observer.update(this, tile);
         }
     }
+
+    public int getDIM() { return this.DIM; }
 }
