@@ -52,9 +52,11 @@ public class ClientHandler extends Thread {
         System.exit(1);
     }
 
-    private void sendToAll(Object msg) throws IOException {
-        for(ClientHandler c : PlaceServer.clients){
-            c.networkOut.writeUnshared(msg);
+    void write(PlaceRequest msg) {
+        try {
+            networkOut.writeUnshared(msg);
+        } catch (IOException e) {
+            error(e.getMessage());
         }
     }
 
@@ -71,10 +73,8 @@ public class ClientHandler extends Thread {
                         //if(PlaceServer.addUser((String) response.getData())){
                             report(response.getData() + " logged in to server");
                             this.username = (String) response.getData();
-                            //sendToAll(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, clientNum));
-                            //sendToAll(new PlaceRequest<PlaceBoard>(PlaceRequest.RequestType.BOARD, this.placeBoard));
-                            networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, clientNum));
-                            networkOut.writeUnshared(new PlaceRequest<PlaceBoard>(PlaceRequest.RequestType.BOARD, this.placeBoard));
+                            write(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, clientNum));
+                            write(new PlaceRequest<PlaceBoard>(PlaceRequest.RequestType.BOARD, this.placeBoard));
                         //} else {
                         //    report(response.getData() + " failed to log in (username taken).");
                         //    networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.ERROR, response.getData()));
@@ -88,8 +88,7 @@ public class ClientHandler extends Thread {
                         PlaceTile tile = (PlaceTile) response.getData();
                         report(tile.getRow() + " " + tile.getCol() + " to " + tile.getColor().getName());
                         System.out.println("send tile change");
-                        //sendToAll(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));
-                        networkOut.writeUnshared(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));
+                        PlaceServer.sendToAll(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));
                         break;
                     case TEST:
                         report((String) response.getData());

@@ -2,6 +2,7 @@ package place.server;
 
 import place.PlaceBoard;
 import place.model.ClientModel;
+import place.network.PlaceRequest;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -67,6 +68,12 @@ public class PlaceServer {
         System.exit(1);
     }
 
+    static void sendToAll(PlaceRequest msg) throws IOException {
+        for(ClientHandler c : PlaceServer.clients){
+            c.write(msg);
+        }
+    }
+
     /**
      * Spawns client threads each time a new client connects.
      * @throws IOException if a network error occurs
@@ -77,14 +84,15 @@ public class PlaceServer {
         while(true) {
             Socket clientSocket = serverSocket.accept();
 
-            report( "New client connected [" + clients.size() + "]");
+            report( "New client connected [" + (clients.size() + 1) + "]");
 
             ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());
 
+            clients.add(new ClientHandler(placeBoard, networkIn, networkOut, clients.size() + 1));
             report("Assigning new thread for client [" + clients.size() + "]");
-            Thread t = new ClientHandler(placeBoard, networkIn, networkOut, clients.size());
-            report("Starting thread for client [" + (clients.size() - 1) + "]");
+            Thread t = clients.get(clients.size() - 1);
+            report("Starting thread for client [" + clients.size() + "]");
             t.start();
         }
     }
