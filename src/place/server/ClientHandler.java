@@ -86,6 +86,7 @@ public class ClientHandler extends Thread {
                         break;
                     case CHANGE_TILE:
                         PlaceTile tile = (PlaceTile) response.getData();
+                        PlaceServer.updateTile(tile);
                         report(tile.getRow() + " " + tile.getCol() + " to " + tile.getColor().getName());
                         System.out.println("send tile change");
                         PlaceServer.sendToAll(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));

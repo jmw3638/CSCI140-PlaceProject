@@ -1,6 +1,7 @@
 package place.server;
 
 import place.PlaceBoard;
+import place.PlaceTile;
 import place.model.ClientModel;
 import place.network.PlaceRequest;
 
@@ -28,7 +29,7 @@ public class PlaceServer {
     /** the place board */
     private static PlaceBoard placeBoard;
     /** the clients currently logged in to the server */
-    public static ArrayList<ClientHandler> clients;
+    static ArrayList<ClientHandler> clients;
 
     /**
      * The main method starts the server
@@ -50,6 +51,8 @@ public class PlaceServer {
             }
         }
     }
+
+    static void updateTile(PlaceTile tile) { placeBoard.setTile(tile); }
 
     /**
      * Reports a message to the server output
