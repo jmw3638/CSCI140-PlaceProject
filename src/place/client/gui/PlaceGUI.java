@@ -29,7 +29,7 @@ import java.util.Random;
 
 public class PlaceGUI extends Application implements Observer<ClientModel, PlaceTile> {
     /** the side length of a GUI place tile on the board */
-    private static final int TILE_SIDE_LENGTH = 50;
+    private static final int TILE_SIDE_LENGTH = 5; //50
     /** the side length of the GUI color section tiles */
     private static final int COLOR_SELECT_SIDE_LENGTH = 30;
     /** the connection to the server */
