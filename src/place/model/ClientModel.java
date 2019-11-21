@@ -1,6 +1,7 @@
 package place.model;
 
 import place.PlaceBoard;
+import place.PlaceColor;
 import place.PlaceTile;
 
 import java.util.LinkedList;
@@ -13,13 +14,10 @@ import java.util.List;
  * @author Sean Strout @ RIT CS
  */
 public class ClientModel {
-    /** the dimension of the board */
-    private int DIM;
-    /** the actual board that holds the tiles */
-    private PlaceBoard board;
-
     /** observers of the model (PlacePTUI and PlaceGUI - the "views") */
     private List<Observer<ClientModel, PlaceTile>> observers = new LinkedList<>();
+    /** the actual board of tiles */
+    private static PlaceTile[][] tiles;
 
     /**
      * Add a new observer.
@@ -39,5 +37,21 @@ public class ClientModel {
         }
     }
 
-    public int getDIM() { return this.DIM; }
+    static void initBoard(PlaceBoard board) {
+        tiles = new PlaceTile[board.DIM][board.DIM];
+        for(int r = 0; r < tiles.length; r++){
+            for(int c = 0; c < tiles[0].length; c++){
+                tiles[r][c] = board.getTile(r, c);
+            }
+        }
+    }
+
+    void tileChanged(PlaceTile tile) {
+        tiles[tile.getRow()][tile.getCol()] = tile;
+        notifyObservers(tile);
+    }
+
+    public PlaceTile[][] getTiles() { return tiles; }
+
+    public int getDim() { return tiles.length; }
 }

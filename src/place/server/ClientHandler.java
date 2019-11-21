@@ -52,6 +52,12 @@ public class ClientHandler extends Thread {
         System.exit(1);
     }
 
+    private void sendToAll(Object msg) throws IOException {
+        for(ClientHandler c : PlaceServer.clients){
+            c.networkOut.writeUnshared(msg);
+        }
+    }
+
     /**
      * Runs the thread and handles messages from the client
      */
@@ -62,28 +68,32 @@ public class ClientHandler extends Thread {
                 PlaceRequest<?> response = (PlaceRequest<?>) networkIn.readUnshared();
                 switch (response.getType()){
                     case LOGIN:
-                        if(PlaceServer.addUser((String) response.getData())){
+                        //if(PlaceServer.addUser((String) response.getData())){
                             report(response.getData() + " logged in to server");
                             this.username = (String) response.getData();
-                            networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, "Successfully logged in to server"));
+                            //sendToAll(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, clientNum));
+                            //sendToAll(new PlaceRequest<PlaceBoard>(PlaceRequest.RequestType.BOARD, this.placeBoard));
+                            networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, clientNum));
                             networkOut.writeUnshared(new PlaceRequest<PlaceBoard>(PlaceRequest.RequestType.BOARD, this.placeBoard));
-                        } else {
-                            report(response.getData() + " failed to log in (username taken).");
-                            networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.ERROR, null));
-                        }
+                        //} else {
+                        //    report(response.getData() + " failed to log in (username taken).");
+                        //    networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.ERROR, response.getData()));
+                        //}
                         break;
                     case LOGOUT:
                         report("Closing connection");
-                        PlaceServer.delUser(this.username);
-                        networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGOUT_SUCCESS, clientNum));
+                        PlaceServer.clients.remove(this);
                         break;
                     case CHANGE_TILE:
-                        Tile tile = (Tile) response.getData();
-                        report(tile.getTile().getRow() + " " + tile.getTile().getCol());
+                        PlaceTile tile = (PlaceTile) response.getData();
+                        report(tile.getRow() + " " + tile.getCol() + " to " + tile.getColor().getName());
+                        System.out.println("send tile change");
+                        //sendToAll(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));
+                        networkOut.writeUnshared(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));
                         break;
                     case TEST:
                         report((String) response.getData());
-                        networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.TEST, ""));
+                        networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.TEST, ""));
                         break;
                     default:
                         error("Unexpected type: " + response.getType());

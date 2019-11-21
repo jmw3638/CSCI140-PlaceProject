@@ -61,11 +61,6 @@ public class PlaceRequest<E extends Serializable> implements Serializable {
         LOGOUT,
 
         /**
-         * Used by the server to indicate to the client the logout succeeded.
-         */
-        LOGOUT_SUCCESS,
-
-        /**
          * Used by the server to indicate to all clients that a tile has
          * officially been changed.  It will contain the new Tile object.
          * The clients should update their view of the board each time

@@ -2,6 +2,7 @@ package place.client.gui;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import place.PlaceBoard;
 import place.PlaceColor;
 import place.PlaceTile;
 
@@ -9,25 +10,18 @@ import java.io.Serializable;
 import java.util.Random;
 
 public class Tile extends Rectangle implements Serializable {
-    private int row;
-    private int col;
     private PlaceTile tile;
 
-    Tile(int row, int col, int side) {
-        this.row = row;
-        this.col = col;
+    Tile(PlaceTile tile, int side) {
         this.setWidth(side);
         this.setHeight(side);
-        this.setFill(Color.rgb(
-                new Random().nextInt(255),
-                new Random().nextInt(255),
-                new Random().nextInt(255)));
-        tile = new PlaceTile(row, col, "", PlaceColor.WHITE);
+        this.setFill(Color.rgb(tile.getColor().getRed(), tile.getColor().getGreen(), tile.getColor().getBlue()));
+        this.tile = tile;
     }
 
-    int getRow() { return this.row; }
-
-    int getCol() { return this.col; }
-
+    void setTile(PlaceTile tile) {
+        this.tile = tile;
+        this.setFill(Color.rgb(tile.getColor().getRed(), tile.getColor().getGreen(), tile.getColor().getBlue()));
+    }
     public PlaceTile getTile() { return this.tile; }
 }

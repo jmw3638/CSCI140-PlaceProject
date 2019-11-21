@@ -1,7 +1,9 @@
 package place.client.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
@@ -9,8 +11,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import place.PlaceColor;
+import place.PlaceException;
 import place.PlaceTile;
 import place.model.ClientModel;
+import place.model.NetworkClient;
 import place.model.Observer;
 import place.network.PlaceRequest;
 
@@ -20,6 +24,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 public class PlaceGUI extends Application implements Observer<ClientModel, PlaceTile> {
@@ -27,18 +32,15 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     private static final int TILE_SIDE_LENGTH = 50;
     /** the side length of the GUI color section tiles */
     private static final int COLOR_SELECT_SIDE_LENGTH = 30;
-    /** the client socket which expects a host and port */
-    private static Socket clientSocket;
-    /** the incoming connection from the server */
-    private static ObjectInputStream networkIn;
-    /** the outgoing connection to the server */
-    private static ObjectOutputStream networkOut;
+    /** the connection to the server */
+    private NetworkClient serverConnection;
     /** the client socket's username */
-    private static String username;
+    private String username;
     /** the model for the game */
     private ClientModel model;
+    /** the current selected color */
+    private PlaceColor selectedColor;
 
-    private Scene scene;
     private BorderPane gameWindow;
     private GridPane tiles;
     private HBox colorSelect;
@@ -54,11 +56,13 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
         List<String> args = getParameters().getRaw();
         String host = args.get(0);
         int port = Integer.parseInt(args.get(1));
-        String username = args.get(2);
-
-        createClient(host, port, username);
+        this.username = args.get(2);
 
         this.model = new ClientModel();
+
+        this.serverConnection = new NetworkClient(host, port, this.username, this.model);
+
+        this.selectedColor = PlaceColor.WHITE;
 
         this.gameWindow = new BorderPane();
         this.tiles = new GridPane();
@@ -69,30 +73,9 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
         this.tileTime = new Label();
     }
 
-    /**
-     * Creates the client and connects it to the server socket
-     * @param host the host ip to connect to
-     * @param port the host port to connect to
-     * @param user the username of the client
-     */
-    private static void createClient(String host, int port, String user) {
-        try {
-            clientSocket = new Socket(host, port);
-            username = user;
-
-            networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
-            networkIn = new ObjectInputStream(clientSocket.getInputStream());
-
-            networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, user));
-            System.out.println("Connecting to server");
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
     @Override
-    public void start(Stage primaryStage) throws Exception {
-        this.scene = new Scene(gameWindow);
+    public void start(Stage primaryStage) {
+        Scene scene = new Scene(gameWindow);
         this.gameWindow.setTop(tileInfo);
         this.gameWindow.setCenter(createTiles());
         this.gameWindow.setBottom(createColorSelect());
@@ -106,6 +89,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
         primaryStage.show();
 
         this.model.addObserver(this);
+        this.serverConnection.startListener();
     }
 
     /**
@@ -113,8 +97,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      * @return the GridPane of buttons
      */
     private Pane createTiles(){
-        int dim = model.getDIM();
-        /** REMOVE */ dim = 10;
+        int dim = this.model.getDim();
         RowConstraints rowC = new RowConstraints();
         rowC.setPercentHeight(100.0 / dim);
         ColumnConstraints colC = new ColumnConstraints();
@@ -129,21 +112,15 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
 
         for(int r = 0; r < dim; r++){
             for(int c = 0; c < dim; c++){
-                Tile tile = new Tile(r, c, TILE_SIDE_LENGTH);
+                Tile tile = new Tile(this.model.getTiles()[r][c], TILE_SIDE_LENGTH);
 
                 tile.setOnMouseClicked(e -> {
-                    try {
-                        networkOut.writeUnshared(new PlaceRequest<Tile>(PlaceRequest.RequestType.CHANGE_TILE, tile));
-                        networkOut.flush();
-                        System.out.println(tile.getRow() + " " + tile.getCol() + " sent");
-                    } catch (IOException ex) {
-                        System.err.println(ex.getMessage());
-                        System.exit(1);
-                    }
+                    this.serverConnection.sendTileChange(new PlaceTile(tile.getTile().getRow(), tile.getTile().getCol(), this.username , this.selectedColor));
+                    System.out.println(tile.getTile().getRow() + " " + tile.getTile().getCol() + " sent");
                 });
                 tile.setOnMouseEntered(e -> {
                     tileUser.setText(tile.getTile().getOwner());
-                    tilePos.setText("(" + tile.getRow() + "," + tile.getCol() + ")");
+                    tilePos.setText("(" + tile.getTile().getRow() + "," + tile.getTile().getCol() + ")");
                     tileTime.setText(tile.getTile().getTime() + "ms");
                 });
                 tile.setOnMouseExited(e -> {
@@ -165,6 +142,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
             i++;
 
             colorSelTile.setOnMouseClicked(e -> {
+                this.selectedColor = colorSelTile.getPlaceColor();
                 System.out.println("Selected " + colorSelTile.getPlaceColor().getName());
             });
             colorSelTile.setOnMouseEntered(e -> {
@@ -181,7 +159,19 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     }
 
     @Override
-    public void update(ClientModel model, PlaceTile tile) {
+    public void update(ClientModel model, PlaceTile tile) { refresh(tile); }
+
+    private void refresh(PlaceTile tile) {
+        Objects.requireNonNull(getElement(tile.getRow(), tile.getCol())).setTile(tile);
+    }
+
+    private Tile getElement(int col, int row){
+        for(Node n : tiles.getChildren()){
+            if(GridPane.getColumnIndex(n) == col && GridPane.getRowIndex(n) == row){
+                return (Tile) n;
+            }
+        }
+        return null;
     }
 
     public static void main(String[] args) {

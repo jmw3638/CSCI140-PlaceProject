@@ -61,8 +61,6 @@ public class PlacePTUI implements Observer<ClientModel, PlaceTile> {
                 if(response.getType().equals(PlaceRequest.RequestType.LOGIN_SUCCESS)){
                     System.out.println(response.getData() + " connected to server");
                     networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.TEST, "Ready for input"));
-                } else if(response.getType().equals(PlaceRequest.RequestType.LOGOUT_SUCCESS)){
-                    break;
                 } else {
                     System.out.print("Input: ");
                     String test = input.readLine();
