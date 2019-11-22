@@ -9,6 +9,8 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -30,10 +32,10 @@ import java.util.Objects;
  * @author Jake Waclawski
  */
 public class PlaceGUI extends Application implements Observer<ClientModel, PlaceTile> {
-    /** the size of a place tile side */
-    private static final int TILE_SIDE = 5;
-    /** the size of the color selection button sides */
-    private static final int COLOR_SELECTION_SIDE = 25;
+    /** the size of a GUI window side */
+    private static final int WINDOW_SIDE = 725;
+    /** the size of the color selection button height */
+    private static final int COLOR_SELECTION_HEIGHT = 25;
     /** the connection to the server */
     private NetworkClient serverConnection;
     /** the client socket's username */
@@ -46,10 +48,10 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     private BorderPane placeWindow;
     /** the grid of place tiles */
     private GridPane tiles;
+    /** the scroll pane containing the grid of tiles */
+    private ScrollPane scrollPane;
     /** the collection of ColorSection objects */
     private HBox colorSelect;
-
-    private ScrollPane scrollPane;
 
     /**
      * Create network connection based on command line parameters.
@@ -81,7 +83,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      */
     @Override
     public void start(Stage primaryStage) {
-        Scene scene = new Scene(placeWindow);
+        Scene scene = new Scene(placeWindow, WINDOW_SIDE, WINDOW_SIDE + COLOR_SELECTION_HEIGHT);
 
         this.placeWindow.setCenter(new ZoomableScrollPane(createTiles()));
         this.placeWindow.setBottom(createColorSelect());
@@ -118,11 +120,13 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
 
         for(int r = 0; r < dim; r++){
             for(int c = 0; c < dim; c++){
-                Tile tile = new Tile(this.model.getTiles()[r][c], TILE_SIDE);
+                Tile tile = new Tile(this.model.getTiles()[r][c], WINDOW_SIDE / model.getDim());
 
                 tile.setOnMouseClicked(e -> {
-                    if(this.selectedColor != null) {
+                    if(this.selectedColor != null && e.getButton() == MouseButton.PRIMARY) {
                         this.serverConnection.sendTileChange(new PlaceTile(tile.getTile().getRow(), tile.getTile().getCol(), this.username , this.selectedColor));
+                    } else {
+                        e.consume();
                     }
                 });
 
@@ -140,14 +144,17 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      */
     private HBox createColorSelect() {
         for(PlaceColor c : PlaceColor.values()){
-            ColorSelection colorSelTile = new ColorSelection(c, COLOR_SELECTION_SIDE);
-
+            ColorSelection colorSelTile = new ColorSelection(c, WINDOW_SIDE / PlaceColor.TOTAL_COLORS, COLOR_SELECTION_HEIGHT);
             colorSelTile.setOnMouseClicked(e -> {
-                this.selectedColor = colorSelTile.getPlaceColor();
-                for(Node n : colorSelect.getChildren()) {
-                    ((ColorSelection) n).setSelected(false);
+                if(e.getButton() == MouseButton.PRIMARY) {
+                    this.selectedColor = colorSelTile.getPlaceColor();
+                    for (Node n : colorSelect.getChildren()) {
+                        ((ColorSelection) n).setSelected(false);
+                    }
+                    colorSelTile.setSelected(true);
+                } else {
+                    e.consume();
                 }
-                colorSelTile.setSelected(true);
             });
 
             HBox.setHgrow(colorSelTile, Priority.ALWAYS);
@@ -217,12 +224,13 @@ class ColorSelection extends Rectangle implements Serializable {
     /**
      * Create a new button representing a place color
      * @param placeColor the color for the button
-     * @param side the length of the button size
+     * @param width the width of the button
+     * @param height the height of the button
      */
-    ColorSelection(PlaceColor placeColor, int side){
+    ColorSelection(PlaceColor placeColor, int width, int height){
         this.placeColor = placeColor;
-        this.setWidth(side);
-        this.setHeight(side);
+        this.setWidth(width);
+        this.setHeight(height);
         this.setFill(Color.rgb(
                 this.placeColor.getRed(),
                 this.placeColor.getGreen(),
@@ -265,8 +273,8 @@ class ZoomableScrollPane extends ScrollPane {
         setHbarPolicy(ScrollBarPolicy.NEVER);
         setVbarPolicy(ScrollBarPolicy.NEVER);
 
-        //setFitToHeight(true); //center
-        //setFitToWidth(true); //center
+        setFitToHeight(true);
+        setFitToWidth(true);
         setPannable(true);
 
         updateScale();
@@ -277,6 +285,9 @@ class ZoomableScrollPane extends ScrollPane {
         outerNode.setOnScroll(e -> {
             e.consume();
             onScroll(e.getTextDeltaY(), new Point2D(e.getX(), e.getY()));
+        });
+        outerNode.addEventHandler(MouseEvent.ANY, e -> {
+            if(e.getButton() != MouseButton.SECONDARY) { e.consume(); }
         });
         return outerNode;
     }
