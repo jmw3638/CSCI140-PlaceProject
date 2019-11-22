@@ -1,6 +1,7 @@
 package place.server;
 
 import place.PlaceBoard;
+import place.PlaceException;
 import place.PlaceTile;
 import place.model.ClientModel;
 import place.network.PlaceRequest;
@@ -29,7 +30,7 @@ public class PlaceServer {
     /** the place board */
     private static PlaceBoard placeBoard;
     /** the clients currently logged in to the server */
-    static ArrayList<ClientHandler> clients;
+    private static ArrayList<ClientHandler> clients;
 
     /**
      * The main method starts the server
@@ -52,7 +53,18 @@ public class PlaceServer {
         }
     }
 
-    static void updateTile(PlaceTile tile) { placeBoard.setTile(tile); }
+    /**
+     * Attempt to update a tile on the server side place board
+     * @param tile the tile to update
+     * @throws PlaceException if the tile coordinates are invalid
+     */
+    static void updateTile(PlaceTile tile) throws PlaceException {
+        if(placeBoard.isValid(tile)) {
+            placeBoard.setTile(tile);
+        } else {
+            throw new PlaceException("Invalid tile coordinates");
+        }
+    }
 
     /**
      * Reports a message to the server output
@@ -71,12 +83,22 @@ public class PlaceServer {
         System.exit(1);
     }
 
-    static void sendToAll(PlaceRequest msg) throws IOException {
+    /**
+     * Send a message to all clients connected to the server
+     * @param msg the message
+     */
+    static void sendToAll(PlaceRequest msg) {
         for(ClientHandler c : PlaceServer.clients){
             c.write(msg);
         }
     }
 
+    /**
+     * Add a client to the list of clients. Only adds the client if its username
+     * is now already being currently used
+     * @param client the client to add
+     * @return if the client was able to be added
+     */
     static boolean addClient(ClientHandler client) {
         for(ClientHandler c : PlaceServer.clients){
             if(c.getUsername().equals(client.getUsername())){
@@ -87,6 +109,10 @@ public class PlaceServer {
         return true;
     }
 
+    /**
+     * Remove a client from the list of clients
+     * @param client the client to remove
+     */
     static void removeClient(ClientHandler client) {
         clients.remove(client);
     }

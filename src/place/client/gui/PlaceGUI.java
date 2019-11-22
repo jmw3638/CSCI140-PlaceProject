@@ -126,13 +126,11 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      * Creates and returns the collection of ColorSelection objects and stores
      * them into an HBox. When a color is clicked, set it as the
      * selected color.
-     * @return the Hbox of ColorSection objects
+     * @return the HBox of ColorSection objects
      */
     private HBox createColorSelect(){
-        int i = 0;
         for(PlaceColor c : PlaceColor.values()){
-            ColorSelection colorSelTile = new ColorSelection(i, c, COLOR_SELECT_SIDE_LENGTH);
-            i++;
+            ColorSelection colorSelTile = new ColorSelection(c, COLOR_SELECT_SIDE_LENGTH);
 
             colorSelTile.setOnMouseClicked(e -> {
                 this.selectedColor = colorSelTile.getPlaceColor();
@@ -179,6 +177,11 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
         return null;
     }
 
+    /**
+     * The main method starts the GUI client
+     *
+     * @param args the command line arguments
+     */
     public static void main(String[] args) {
         if (args.length != 3) {
             System.out.println("Usage: java PlaceGUI host port username");
@@ -189,13 +192,24 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     }
 }
 
+/**
+ * Represents a color selection button. Allows the user
+ * to select which color they want.
+ *
+ * @author Jake Waclawski
+ */
 class ColorSelection extends Rectangle implements Serializable {
+    /** the place color of the button */
     private PlaceColor placeColor;
+    /** the tooltip information for the button */
     private Tooltip info;
-    private int num;
 
-    ColorSelection(int num, PlaceColor placeColor, int side){
-        this.num = num;
+    /**
+     * Create a new button representing a place color
+     * @param placeColor the color for the button
+     * @param side the length of the button size
+     */
+    ColorSelection(PlaceColor placeColor, int side){
         this.placeColor = placeColor;
         this.setWidth(side);
         this.setHeight(side);
@@ -203,18 +217,26 @@ class ColorSelection extends Rectangle implements Serializable {
                 this.placeColor.getRed(),
                 this.placeColor.getGreen(),
                 this.placeColor.getBlue()));
-        info = new Tooltip(num + " - " + this.getPlaceColor().getName());
+        info = new Tooltip(placeColor.getNumber() + " - " + this.getPlaceColor().getName());
 
         Tooltip.install(this, info);
     }
 
+    /**
+     * Get the place color of the button
+     * @return the place color
+     */
     PlaceColor getPlaceColor() { return this.placeColor; }
 
+    /**
+     * Set whether the button is currently selected or not, update the tool tip accordingly
+     * @param val if it should be set to selected or not
+     */
     void setSelected(boolean val) {
         if(val) {
-            info.setText(num + " - " + this.getPlaceColor().getName() + "\nselected");
+            info.setText(this.placeColor.getNumber() + " - " + this.placeColor.getName() + "\nselected");
         } else {
-            info.setText(num + " - " + this.getPlaceColor().getName());
+            info.setText(this.placeColor.getNumber() + " - " + this.placeColor.getName());
         }
     }
 }

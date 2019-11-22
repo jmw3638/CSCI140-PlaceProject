@@ -12,6 +12,7 @@ import java.util.List;
  * side applications (PTUI, GUI, bots) are observers of this model.
  *
  * @author Sean Strout @ RIT CS
+ * @author Jake Waclawski
  */
 public class ClientModel {
     /** observers of the model (PlacePTUI and PlaceGUI - the "views") */
@@ -37,6 +38,10 @@ public class ClientModel {
         }
     }
 
+    /**
+     * Initialize the board for the newly connected client
+     * @param board the place board
+     */
     static void initBoard(PlaceBoard board) {
         tiles = new PlaceTile[board.DIM][board.DIM];
         for(int r = 0; r < tiles.length; r++){
@@ -46,12 +51,24 @@ public class ClientModel {
         }
     }
 
+    /**
+     * Change a tile on the client side board
+     * @param tile the tile to change
+     */
     void tileChanged(PlaceTile tile) {
         tiles[tile.getRow()][tile.getCol()] = tile;
         notifyObservers(tile);
     }
 
+    /**
+     * Get the matrix of place tiles
+     * @return the tiles
+     */
     public PlaceTile[][] getTiles() { return tiles; }
 
+    /**
+     * Get the dimension of the board
+     * @return the dimension
+     */
     public int getDim() { return tiles.length; }
 }

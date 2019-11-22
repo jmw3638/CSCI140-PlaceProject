@@ -12,14 +12,33 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+/**
+ * Represents a client in the network, handles all server messages and
+ * user inputs
+ *
+ * @author Jake Waclawski
+ */
 public class NetworkClient {
+    /** the client socket connection to the server */
     private Socket clientSocket;
+    /** the incoming connection from the server */
     private ObjectInputStream networkIn;
+    /** the outgoing connection to the server */
     private ObjectOutputStream networkOut;
+    /** the client model */
     private ClientModel model;
+    /** the username of the client */
     private String username;
+    /** boolean value if the client should listen for server messages */
     private boolean go;
 
+    /**
+     * Represents a new connection to the server
+     * @param host the host to connect to
+     * @param port the port to connect to
+     * @param username the username of the client
+     * @param model the client model
+     */
     public NetworkClient(String host, int port, String username, ClientModel model) {
         try {
             this.clientSocket = new Socket(host, port);
@@ -75,6 +94,9 @@ public class NetworkClient {
         System.exit(1);
     }
 
+    /**
+     * Listen and handle server messages
+     */
     private void run() {
         while (this.go) {
             try {
@@ -103,6 +125,10 @@ public class NetworkClient {
         netThread.start();
     }
 
+    /**
+     * Stop listening for server messages and close down the client socket.
+     * Exit the program.
+     */
     public void shutDown() {
         this.go = false;
         try {
@@ -115,6 +141,10 @@ public class NetworkClient {
         }
     }
 
+    /**
+     * Send a tile change request to the server
+     * @param tile the tile to change
+     */
     public void sendTileChange(PlaceTile tile) {
         try {
             networkOut.writeUnshared(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.CHANGE_TILE, tile));
