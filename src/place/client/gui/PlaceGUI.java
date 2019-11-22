@@ -1,9 +1,13 @@
 package place.client.gui;
 
 import javafx.application.Application;
+import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -26,10 +30,10 @@ import java.util.Objects;
  * @author Jake Waclawski
  */
 public class PlaceGUI extends Application implements Observer<ClientModel, PlaceTile> {
-    /** the side length of a GUI place tile on the board */
-    private static final int TILE_SIDE_LENGTH = 50;
-    /** the side length of the GUI color section tiles */
-    private static final int COLOR_SELECT_SIDE_LENGTH = 30;
+    /** the size of a place tile side */
+    private static final int TILE_SIDE = 5;
+    /** the size of the color selection button sides */
+    private static final int COLOR_SELECTION_SIDE = 25;
     /** the connection to the server */
     private NetworkClient serverConnection;
     /** the client socket's username */
@@ -44,6 +48,8 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     private GridPane tiles;
     /** the collection of ColorSection objects */
     private HBox colorSelect;
+
+    private ScrollPane scrollPane;
 
     /**
      * Create network connection based on command line parameters.
@@ -64,6 +70,8 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
         this.placeWindow = new BorderPane();
         this.tiles = new GridPane();
         this.colorSelect = new HBox();
+
+        this.scrollPane = new ScrollPane();
     }
 
     /**
@@ -74,9 +82,11 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     @Override
     public void start(Stage primaryStage) {
         Scene scene = new Scene(placeWindow);
-        this.placeWindow.setCenter(createTiles());
+
+        this.placeWindow.setCenter(new ZoomableScrollPane(createTiles()));
         this.placeWindow.setBottom(createColorSelect());
         this.colorSelect.setAlignment(Pos.CENTER);
+        this.scrollPane.setContent(tiles);
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("Place: " + username);
@@ -92,7 +102,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      * is clicked, send it to the server.
      * @return the GridPane of buttons
      */
-    private Pane createTiles(){
+    private Pane createTiles() {
         int dim = this.model.getDim();
         RowConstraints rowC = new RowConstraints();
         rowC.setPercentHeight(100.0 / dim);
@@ -108,7 +118,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
 
         for(int r = 0; r < dim; r++){
             for(int c = 0; c < dim; c++){
-                Tile tile = new Tile(this.model.getTiles()[r][c], TILE_SIDE_LENGTH);
+                Tile tile = new Tile(this.model.getTiles()[r][c], TILE_SIDE);
 
                 tile.setOnMouseClicked(e -> {
                     if(this.selectedColor != null) {
@@ -128,9 +138,9 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      * selected color.
      * @return the HBox of ColorSection objects
      */
-    private HBox createColorSelect(){
+    private HBox createColorSelect() {
         for(PlaceColor c : PlaceColor.values()){
-            ColorSelection colorSelTile = new ColorSelection(c, COLOR_SELECT_SIDE_LENGTH);
+            ColorSelection colorSelTile = new ColorSelection(c, COLOR_SELECTION_SIDE);
 
             colorSelTile.setOnMouseClicked(e -> {
                 this.selectedColor = colorSelTile.getPlaceColor();
@@ -237,6 +247,80 @@ class ColorSelection extends Rectangle implements Serializable {
             info.setText(this.placeColor.getNumber() + " - " + this.placeColor.getName() + "\nselected");
         } else {
             info.setText(this.placeColor.getNumber() + " - " + this.placeColor.getName());
+        }
+    }
+}
+
+class ZoomableScrollPane extends ScrollPane {
+    private double scaleValue = 1.0;
+    private Node target;
+    private Node zoomNode;
+
+    ZoomableScrollPane(Node target) {
+        super();
+        this.target = target;
+        this.zoomNode = new Group(target);
+        setContent(outerNode(zoomNode));
+
+        setHbarPolicy(ScrollBarPolicy.NEVER);
+        setVbarPolicy(ScrollBarPolicy.NEVER);
+
+        //setFitToHeight(true); //center
+        //setFitToWidth(true); //center
+        setPannable(true);
+
+        updateScale();
+    }
+
+    private Node outerNode(Node node) {
+        Node outerNode = centeredNode(node);
+        outerNode.setOnScroll(e -> {
+            e.consume();
+            onScroll(e.getTextDeltaY(), new Point2D(e.getX(), e.getY()));
+        });
+        return outerNode;
+    }
+
+    private Node centeredNode(Node node) {
+        VBox vBox = new VBox(node);
+        vBox.setAlignment(Pos.CENTER);
+        return vBox;
+    }
+
+    private void updateScale() {
+        target.setScaleX(scaleValue);
+        target.setScaleY(scaleValue);
+    }
+
+    private void onScroll(double wheelDelta, Point2D mousePoint) {
+        double zoomIntensity = 0.05;
+        double zoomFactor = Math.exp(wheelDelta * zoomIntensity);
+
+        Bounds innerBounds = zoomNode.getLayoutBounds();
+        Bounds viewportBounds = getLayoutBounds();
+
+        // calculate pixel offsets from [0, 1] range
+        double valX = this.getHvalue() * (innerBounds.getWidth() - viewportBounds.getWidth());
+        double valY = this.getVvalue() * (innerBounds.getHeight() - viewportBounds.getHeight());
+
+        scaleValue = scaleValue * zoomFactor;
+        if(scaleValue < 1.0) { scaleValue = 1.0; }
+        if(scaleValue < 10.0) {
+            updateScale();
+            this.layout(); // refresh ScrollPane scroll positions & target bounds
+            // convert target coordinates to zoomTarget coordinates
+            Point2D posInZoomTarget = target.parentToLocal(zoomNode.parentToLocal(mousePoint));
+
+            // calculate adjustment of scroll position (pixels)
+            Point2D adjustment = target.getLocalToParentTransform().deltaTransform(posInZoomTarget.multiply(zoomFactor - 1));
+
+            // convert back to [0, 1] range
+            // (too large/small values are automatically corrected by ScrollPane)
+            Bounds updatedInnerBounds = zoomNode.getBoundsInLocal();
+            this.setHvalue((valX + adjustment.getX()) / (updatedInnerBounds.getWidth() - viewportBounds.getWidth()));
+            this.setVvalue((valY + adjustment.getY()) / (updatedInnerBounds.getHeight() - viewportBounds.getHeight()));
+        } else {
+            scaleValue = scaleValue / zoomFactor;
         }
     }
 }
