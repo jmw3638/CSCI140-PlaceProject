@@ -9,6 +9,8 @@ import place.network.PlaceRequest;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,7 +101,11 @@ public class ClientHandler extends Thread {
                         }
                         break;
                     case CHANGE_TILE:
+                        DateTimeFormatter dateTime = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
+                        LocalDateTime now = LocalDateTime.now();
+
                         PlaceTile tile = (PlaceTile) response.getData();
+                        tile.setTime(dateTime.format(now));
                         PlaceServer.updateTile(tile);
                         report(tile.toString());
                         PlaceServer.sendToAll(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));

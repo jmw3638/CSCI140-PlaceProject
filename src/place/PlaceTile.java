@@ -23,7 +23,7 @@ public class PlaceTile implements Serializable {
      * measured in milliseconds, between the current time and midnight,
      * January 1, 1970 UTC.
      */
-    private long time;
+    private String time;
 
     /**
      * Create a tile (with no timestamp).
@@ -34,7 +34,7 @@ public class PlaceTile implements Serializable {
      * @param color the color
      */
     public PlaceTile(int row, int col, String user, PlaceColor color) {
-        this(row, col, user, color, 0L);
+        this(row, col, user, color, null);
     }
 
     /**
@@ -46,7 +46,7 @@ public class PlaceTile implements Serializable {
      * @param color the color
      * @param time current time in milliseconds
      */
-    public PlaceTile(int row, int col, String user, PlaceColor color, long time) {
+    public PlaceTile(int row, int col, String user, PlaceColor color, String time) {
         this.row = row;
         this.col = col;
         this.color = color;
@@ -80,7 +80,7 @@ public class PlaceTile implements Serializable {
      *
      * @return the time
      */
-    public long getTime() { return this.time; }
+    public String getTime() { return this.time; }
 
     /**
      * Change the tile's color
@@ -94,7 +94,7 @@ public class PlaceTile implements Serializable {
      *
      * @param time the time the tile was last changed
      */
-    public void setTime(long time) { this.time = time; }
+    public void setTime(String time) { this.time = time; }
 
     public String getOwner() {
         return this.user;

@@ -32,7 +32,7 @@ public class ClientModel {
     /**
      * Notify observers the model has changed.
      */
-    private void notifyObservers(PlaceTile tile){
+    private void notifyObservers(PlaceTile tile, String serverMsg){
         for (Observer<ClientModel, PlaceTile> observer: observers) {
             observer.update(this, tile);
         }
@@ -57,7 +57,7 @@ public class ClientModel {
      */
     void tileChanged(PlaceTile tile) {
         tiles[tile.getRow()][tile.getCol()] = tile;
-        notifyObservers(tile);
+        notifyObservers(tile, tile.getOwner() + " set tile @ (" + tile.getRow() + ", " + tile.getCol() + ") to " + tile.getColor().getName());
     }
 
     /**

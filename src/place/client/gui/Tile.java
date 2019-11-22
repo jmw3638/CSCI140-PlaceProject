@@ -25,7 +25,7 @@ public class Tile extends Rectangle implements Serializable {
         this.tile = tile;
         this.setFill(Color.rgb(tile.getColor().getRed(), tile.getColor().getGreen(), tile.getColor().getBlue()));
         info.setText("(" + tile.getRow() + ", " + tile.getCol() + ") " +
-                tile.getColor().getName() + "\n" + tile.getOwner() + " @ " + tile.getTime() + "ms");
+                tile.getColor().getName() + "\n" + tile.getOwner() + "\n" + tile.getTime());
     }
     public PlaceTile getTile() { return this.tile; }
 }

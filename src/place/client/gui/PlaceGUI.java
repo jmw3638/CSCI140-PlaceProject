@@ -1,12 +1,14 @@
 package place.client.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
@@ -71,9 +73,8 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
 
         this.placeWindow = new BorderPane();
         this.tiles = new GridPane();
-        this.colorSelect = new HBox();
-
         this.scrollPane = new ScrollPane();
+        this.colorSelect = new HBox();
     }
 
     /**
@@ -169,7 +170,14 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      * @param tile the tile to update
      */
     @Override
-    public void update(ClientModel model, PlaceTile tile) { refresh(tile); }
+    public void update(ClientModel model, PlaceTile tile) {
+        if(Platform.isFxApplicationThread()) {
+            this.refresh(tile);
+        }
+        else{
+            Platform.runLater(() -> refresh(tile));
+        }
+    }
 
     /**
      * Updates the GUI and updates the specified tile
