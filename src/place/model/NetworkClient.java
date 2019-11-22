@@ -1,5 +1,6 @@
 package place.model;
 
+import javafx.scene.control.skin.TableHeaderRow;
 import place.PlaceBoard;
 import place.PlaceColor;
 import place.PlaceTile;
@@ -26,7 +27,7 @@ public class NetworkClient {
             this.networkIn = new ObjectInputStream(clientSocket.getInputStream());
             this.username = username;
             this.model = model;
-            go = true;
+            this.go = true;
 
             networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, this.username));
 
@@ -38,21 +39,20 @@ public class NetworkClient {
                         report("Successfully logged in (Client-" + response.getData() + ")");
                         break;
                     case ERROR:
-                        System.out.println("Failed to log in, username taken (" + response.getData() + ")");
+                        report("Failed to log in, username taken (" + response.getData() + ")");
+                        shutDown();
                         break;
                     case BOARD:
                         ClientModel.initBoard((PlaceBoard) response.getData());
                         ready = true;
                         break;
                     default:
-                        System.err.println("Unexpected type: " + response.getType());
-                        System.exit(1);
+                        error("Unexpected type: " + response.getType());
                         break;
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println(e.getMessage());
-            System.exit(1);
+            error(e.getMessage());
         }
     }
 
@@ -62,7 +62,7 @@ public class NetworkClient {
      * @param msg the message
      */
     private void report(String msg) {
-        System.out.println("Client > " + msg);
+        System.out.println("Client [" + this.username + "] > " + msg);
     }
 
     /**
@@ -81,29 +81,38 @@ public class NetworkClient {
                 PlaceRequest<?> response = (PlaceRequest<?>) networkIn.readUnshared();
 
                 if (response.getType() == PlaceRequest.RequestType.TILE_CHANGED) {
-                    System.out.println("got tile change");
+                    report(response.getData().toString());
                     this.model.tileChanged((PlaceTile) response.getData());
                 } else {
                     error("Unexpected type: " + response.getType());
                 }
             } catch (IOException | ClassNotFoundException e) {
-                stop();
                 error(e.getMessage());
-                break;
+                shutDown();
             }
         }
     }
 
+    /**
+     * Run rest of client in separate thread.
+     * This threads stops on its own at the end of the game and
+     * does not need to rendezvous with other software components.
+     */
     public void startListener() {
-        // Run rest of client in separate thread.
-        // This threads stops on its own at the end of the game and
-        // does not need to rendezvous with other software components.
         Thread netThread = new Thread(this::run);
         netThread.start();
     }
 
-    private synchronized void stop() {
+    public void shutDown() {
         this.go = false;
+        try {
+            clientSocket.shutdownOutput();
+            clientSocket.shutdownInput();
+            clientSocket.close();
+            System.exit(0);
+        } catch (IOException e) {
+            error(e.getMessage());
+        }
     }
 
     public void sendTileChange(PlaceTile tile) {

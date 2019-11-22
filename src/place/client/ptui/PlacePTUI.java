@@ -54,27 +54,7 @@ public class PlacePTUI implements Observer<ClientModel, PlaceTile> {
      * Handles all client-side logic and server messages
      */
     private static void go() {
-        while(true) {
-            try {
-                PlaceRequest response = (PlaceRequest) networkIn.readObject();
-
-                if(response.getType().equals(PlaceRequest.RequestType.LOGIN_SUCCESS)){
-                    System.out.println(response.getData() + " connected to server");
-                    networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.TEST, "Ready for input"));
-                } else {
-                    System.out.print("Input: ");
-                    String test = input.readLine();
-                    if(test.equals("EXIT")){
-                        networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.LOGOUT, ""));
-                    } else {
-                        System.out.println("\"" + test + "\" sent to server");
-                        networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.TEST, test));
-                    }
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                System.out.println(e.getMessage());
-            }
-        }
+        // TODO
     }
 
     /**

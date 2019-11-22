@@ -77,6 +77,20 @@ public class PlaceServer {
         }
     }
 
+    static boolean addClient(ClientHandler client) {
+        for(ClientHandler c : PlaceServer.clients){
+            if(c.getUsername().equals(client.getUsername())){
+                return false;
+            }
+        }
+        clients.add(client);
+        return true;
+    }
+
+    static void removeClient(ClientHandler client) {
+        clients.remove(client);
+    }
+
     /**
      * Spawns client threads each time a new client connects.
      * @throws IOException if a network error occurs
@@ -92,10 +106,9 @@ public class PlaceServer {
             ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());
 
-            clients.add(new ClientHandler(placeBoard, networkIn, networkOut, clients.size() + 1));
-            report("Assigning new thread for client [" + clients.size() + "]");
-            Thread t = clients.get(clients.size() - 1);
-            report("Starting thread for client [" + clients.size() + "]");
+            report("Assigning new thread for client [" + (clients.size() + 1 )+ "]");
+            Thread t = new ClientHandler(placeBoard, networkIn, networkOut, clients.size() + 1);
+            report("Starting thread for client [" + (clients.size() + 1) + "]");
             t.start();
         }
     }
