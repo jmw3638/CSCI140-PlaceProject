@@ -101,7 +101,7 @@ public class ClientHandler extends Thread {
                         }
                         break;
                     case CHANGE_TILE:
-                        DateTimeFormatter dateTime = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
+                        DateTimeFormatter dateTime = DateTimeFormatter.ofPattern("MM/dd/yyyy\nh:mm:ss a");
                         LocalDateTime now = LocalDateTime.now();
 
                         PlaceTile tile = (PlaceTile) response.getData();
