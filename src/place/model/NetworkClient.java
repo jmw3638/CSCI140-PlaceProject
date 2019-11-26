@@ -1,10 +1,7 @@
 package place.model;
 
-import javafx.scene.control.skin.TableHeaderRow;
 import place.PlaceBoard;
-import place.PlaceColor;
 import place.PlaceTile;
-import place.client.gui.Tile;
 import place.network.PlaceRequest;
 
 import java.io.IOException;
@@ -18,7 +15,7 @@ import java.net.Socket;
  *
  * @author Jake Waclawski
  */
-public class NetworkClient {
+public class NetworkClient extends Thread {
     /** the client socket connection to the server */
     private Socket clientSocket;
     /** the incoming connection from the server */
@@ -31,22 +28,23 @@ public class NetworkClient {
     private String username;
     /** boolean value if the client should listen for server messages */
     private boolean go;
+    /** boolean value if the client is ready to place another tile */
+    private boolean ready;
 
     /**
      * Represents a new connection to the server
-     * @param host the host to connect to
-     * @param port the port to connect to
-     * @param username the username of the client
+     * @param username the client username
      * @param model the client model
      */
     public NetworkClient(String host, int port, String username, ClientModel model) {
         try {
             this.clientSocket = new Socket(host, port);
-            this.networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
-            this.networkIn = new ObjectInputStream(clientSocket.getInputStream());
+            this.networkOut = new ObjectOutputStream(this.clientSocket.getOutputStream());
+            this.networkIn = new ObjectInputStream(this.clientSocket.getInputStream());
             this.username = username;
             this.model = model;
             this.go = true;
+            this.ready = true;
 
             networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, this.username));
 
@@ -97,7 +95,8 @@ public class NetworkClient {
     /**
      * Listen and handle server messages
      */
-    private void run() {
+    @Override
+    public synchronized void run() {
         while (this.go) {
             try {
                 PlaceRequest<?> response = (PlaceRequest<?>) networkIn.readUnshared();
@@ -105,24 +104,16 @@ public class NetworkClient {
                 if (response.getType() == PlaceRequest.RequestType.TILE_CHANGED) {
                     report(response.getData().toString());
                     this.model.tileChanged((PlaceTile) response.getData());
+                } else if(response.getType() == PlaceRequest.RequestType.READY){
+                    this.ready = true;
                 } else {
                     error("Unexpected type: " + response.getType());
                 }
             } catch (IOException | ClassNotFoundException e) {
-                error(e.getMessage());
+                report(e.getMessage());
                 shutDown();
             }
         }
-    }
-
-    /**
-     * Run rest of client in separate thread.
-     * This threads stops on its own at the end of the game and
-     * does not need to rendezvous with other software components.
-     */
-    public void startListener() {
-        Thread netThread = new Thread(this::run);
-        netThread.start();
     }
 
     /**
@@ -147,10 +138,17 @@ public class NetworkClient {
      */
     public void sendTileChange(PlaceTile tile) {
         try {
+            this.ready = false;
             networkOut.writeUnshared(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.CHANGE_TILE, tile));
             networkOut.flush();
         } catch (IOException e) {
             error(e.getMessage());
         }
     }
+
+    /**
+     * States whether the client is ready to place another tile or not
+     * @return if the client is ready
+     */
+    public boolean isReady() { return this.ready; }
 }

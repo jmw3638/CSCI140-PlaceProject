@@ -60,6 +60,10 @@ public class ClientModel {
         notifyObservers(tile, tile.getOwner() + " set tile @ (" + tile.getRow() + ", " + tile.getCol() + ") to " + tile.getColor().getName());
     }
 
+    public boolean isValidMove(int row, int col, int color) {
+        return ( row >= 0 && row < getDim()) && ( col >= 0 && col < getDim() && ( color >= 0 && color < PlaceColor.TOTAL_COLORS ));
+    }
+
     /**
      * Get the matrix of place tiles
      * @return the tiles

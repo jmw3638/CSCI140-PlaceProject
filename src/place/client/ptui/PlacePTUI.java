@@ -1,13 +1,14 @@
 package place.client.ptui;
 
+import place.PlaceColor;
 import place.PlaceTile;
 import place.model.ClientModel;
+import place.model.NetworkClient;
 import place.model.Observer;
-import place.network.PlaceRequest;
-import place.server.PlaceServer;
 
-import java.io.*;
-import java.net.Socket;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Scanner;
 
 /**
  * Represents a client of the Place board. Establishes a connection with the server
@@ -15,77 +16,88 @@ import java.net.Socket;
  *
  * @author Jake Waclawski
  */
-public class PlacePTUI implements Observer<ClientModel, PlaceTile> {
-    /** the client socket which expects a host and port */
-    private static Socket clientSocket;
-    /** the incoming connection from the server */
-    private static ObjectInputStream networkIn;
-    /** the outgoing connection to the server */
-    private static ObjectOutputStream networkOut;
-    /** handle user inputs */
-    private static BufferedReader input;
-
-    @Override
-    public void update(ClientModel model, PlaceTile tile) {
-    }
+public class PlacePTUI extends ConsoleApplication implements Observer<ClientModel, PlaceTile> {
+    private ClientModel model;
+    private String username;
+    private NetworkClient serverConnection;
+    private Scanner userIn;
+    private PrintWriter userOut;
 
     /**
      * The main method creates the client
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         if (args.length != 3) {
             System.out.println("Usage: java PlaceClient host port username");
-            System.exit(1);
+            System.exit(0);
         }
         else {
-            try {
-                createClient(args[0], Integer.parseInt(args[1]), args[2]);
-                input = new BufferedReader(new InputStreamReader(System.in));
-                go();
-                shutDown();
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-            }
+            ConsoleApplication.launch(PlacePTUI.class, args);
         }
+    }
+
+    @Override
+    public void init() {
+        List<String> args = super.getArguments();
+        String host = args.get(0);
+        int port = Integer.parseInt(args.get(1));
+        this.username = args.get(2);
+
+        this.model = new ClientModel();
+
+        this.serverConnection = new NetworkClient(host, port, this.username, this.model);
     }
 
     /**
      * Handles all client-side logic and server messages
      */
-    private static void go() {
-        // TODO
+    @Override
+    public void go(Scanner userIn, PrintWriter userOut) {
+        this.userIn = userIn;
+        this.userOut = userOut;
+
+        this.model.addObserver(this);
+        this.serverConnection.start();
+
+        this.refresh();
+        while(true) { }
     }
 
-    /**
-     * Creates the client and connects it to the server socket
-     * @param host the host ip to connect to
-     * @param port the host port to connect to
-     * @param user the username of the client
-     */
-    private static void createClient(String host, int port, String user) {
-        try {
-            clientSocket = new Socket(host, port);
-
-            networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
-            networkIn = new ObjectInputStream(clientSocket.getInputStream());
-
-            networkOut.writeObject(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, user));
-            System.out.println("Connecting to server");
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
+    private void refresh() {
+        PlaceTile[][] tiles = this.model.getTiles();
+        for(int r = 0; r < tiles.length; r++){
+            for(int c = 0; c < tiles[0].length; c++){
+                userOut.print(tiles[r][c].getColor().getNumber());
+            }
+            userOut.println();
         }
+        boolean done = false;
+        do {
+            this.userOut.print("type tile change as row, column, color: ");
+            this.userOut.flush();
+            int row = this.userIn.nextInt();
+            if(row == -1) { System.exit(0); }
+            int col = this.userIn.nextInt();
+            int color = this.userIn.nextInt();
+            if(this.model.isValidMove(row, col, color)) {
+                this.serverConnection.sendTileChange(new PlaceTile(row, col, this.username, PlaceColor.values()[color]));
+                this.userOut.println(this.userIn.nextLine());
+                done = true;
+            }
+        } while (!done);
     }
 
-    /**
-     * Called at the end of the game to close down the network connection.
-     *
-     * @throws IOException a network error occurred
-     */
-    private static void shutDown() throws IOException {
-        System.out.println("Closing connection to server...");
-        clientSocket.shutdownInput();
-        clientSocket.shutdownOutput();
-        clientSocket.close();
+    @Override
+    public void update(ClientModel model, PlaceTile tile) {
+        this.refresh();
+    }
+
+    @Override
+    public void stop() {
+        this.userIn.close();
+        this.userOut.close();
+        this.serverConnection.shutDown();
     }
 }

@@ -3,16 +3,13 @@ package place.server;
 import place.PlaceBoard;
 import place.PlaceException;
 import place.PlaceTile;
-import place.client.gui.Tile;
 import place.network.PlaceRequest;
 
-import java.io.*;
-import java.lang.reflect.Array;
-import java.net.Socket;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Handles the client thread and all messages from the client
@@ -20,6 +17,8 @@ import java.util.List;
  * @author Jake Waclawski
  */
 public class ClientHandler extends Thread {
+    /** the cool-down time between each user input */
+    private static final int PLACE_COOL_DOWN_TIME = 1000;
     /** the incoming connection from the client */
     private ObjectInputStream networkIn;
     /** the outgoing connection to the client */
@@ -109,12 +108,14 @@ public class ClientHandler extends Thread {
                         PlaceServer.updateTile(tile);
                         report(tile.toString());
                         PlaceServer.sendToAll(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));
+                        Thread.sleep(PLACE_COOL_DOWN_TIME);
+                        write(new PlaceRequest<>(PlaceRequest.RequestType.READY, null));
                         break;
                     default:
                         error("Unexpected type: " + response.getType());
                         break;
                 }
-            } catch (ClassNotFoundException | PlaceException e) {
+            } catch (ClassNotFoundException | PlaceException | InterruptedException e) {
                 error(e.getMessage());
             } catch (IOException e) {
                 report("Disconnected from server");

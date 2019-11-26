@@ -62,6 +62,12 @@ public class PlaceRequest<E extends Serializable> implements Serializable {
          * a tile change arrives.
          */
         TILE_CHANGED,
+
+        /**
+         * Used to by the server to indicate that the client is ready to
+         * place another tile
+         */
+        READY
     }
 
     /** The request type */

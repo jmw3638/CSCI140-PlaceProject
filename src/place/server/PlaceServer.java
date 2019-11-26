@@ -3,15 +3,14 @@ package place.server;
 import place.PlaceBoard;
 import place.PlaceException;
 import place.PlaceTile;
-import place.model.ClientModel;
 import place.network.PlaceRequest;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * The Place server is run on the command line as:
