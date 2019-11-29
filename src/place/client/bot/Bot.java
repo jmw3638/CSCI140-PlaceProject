@@ -1,11 +1,12 @@
 package place.client.bot;
 
 import place.PlaceColor;
+import place.PlaceException;
 import place.PlaceTile;
 import place.model.ClientModel;
 import place.model.NetworkClient;
 import place.server.ClientHandler;
-import place.server.Logger;
+import place.server.PlaceLogger;
 
 import java.util.Random;
 
@@ -15,14 +16,12 @@ class Bot extends Thread {
     private ClientModel model;
     private int botNumber;
     private String username;
-    private Logger logger;
 
     Bot(int botNumber, NetworkClient serverConnection, ClientModel model, String username) {
         this.botNumber = botNumber;
         this.serverConnection = serverConnection;
         this.model = model;
         this.username = username;
-        this.logger = new Logger();
     }
 
     @Override
@@ -31,14 +30,17 @@ class Bot extends Thread {
             try {
                 Thread.sleep(new Random().nextInt(BOT_MAX_COOL_DOWN_TIME - ClientHandler.PLACE_COOL_DOWN_TIME) + ClientHandler.PLACE_COOL_DOWN_TIME);
             } catch (InterruptedException e) {
-                logger.printToLogger("ERROR [" + this.botNumber + "]" + e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
             }
-            if(serverConnection.isReady()) {
-                int row = new Random().nextInt(this.model.getDim());
-                int col = new Random().nextInt(this.model.getDim());
-                int color = new Random().nextInt(PlaceColor.TOTAL_COLORS);
-                PlaceTile tile = new PlaceTile(row, col, this.username, PlaceColor.values()[color]);
+            int row = new Random().nextInt(this.model.getDim());
+            int col = new Random().nextInt(this.model.getDim());
+            int color = new Random().nextInt(PlaceColor.TOTAL_COLORS);
+            PlaceTile tile = new PlaceTile(row, col, this.username, PlaceColor.values()[color]);
+            PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), " Chose: " + tile);
+            try {
                 this.serverConnection.sendTileChange(tile);
+            } catch (PlaceException e) {
+                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
             }
         }
     }

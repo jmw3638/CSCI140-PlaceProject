@@ -30,8 +30,6 @@ public class ClientHandler extends Thread {
     /** the client's username */
     private String username;
 
-    private Logger logger;
-
     /**
      * Represents a new client connection
      * @param placeBoard the place board
@@ -44,7 +42,6 @@ public class ClientHandler extends Thread {
         this.networkIn = networkIn;
         this.networkOut = networkOut;
         this.clientNumber = clientNum;
-        this.logger = new Logger();
     }
 
     /**
@@ -56,7 +53,7 @@ public class ClientHandler extends Thread {
                 networkOut.writeUnshared(msg);
                 networkOut.flush();
             } catch (IOException e) {
-                logger.printToLogger("ERROR [" + this.clientNumber + "]" + e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
             }
     }
 
@@ -79,11 +76,11 @@ public class ClientHandler extends Thread {
                         String user = (String) response.getData();
                         this.username = user;
                         if(PlaceServer.addClient(this)){
-                            logger.printToLogger("[" + this.clientNumber + "] " + user + " logged in to server");
+                            PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), user + " logged in to server");
                             write(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, this.clientNumber));
                             write(new PlaceRequest<PlaceBoard>(PlaceRequest.RequestType.BOARD, this.placeBoard));
                         } else {
-                            logger.printToLogger(user + " failed to log in (username taken).");
+                            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), user + " failed to log in (username taken).");
                             write(new PlaceRequest<>(PlaceRequest.RequestType.ERROR, response.getData()));
                         }
                         break;
@@ -94,19 +91,19 @@ public class ClientHandler extends Thread {
                         PlaceTile tile = (PlaceTile) response.getData();
                         tile.setTime(dateTime.format(now));
                         PlaceServer.updateTile(tile);
-                        logger.printToLogger("[" + this.clientNumber + "] Updating " + tile);
+                        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Updating: " + tile);
                         PlaceServer.sendToAll(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));
                         Thread.sleep(PLACE_COOL_DOWN_TIME);
                         write(new PlaceRequest<>(PlaceRequest.RequestType.READY, null));
                         break;
                     default:
-                        logger.printToLogger("ERROR [" + this.clientNumber + "] Unexpected type: " + response.getType());
+                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), "Unexpected type: " + response.getType());
                         break;
                 }
             } catch (ClassNotFoundException | PlaceException | InterruptedException e) {
-                logger.printToLogger("ERROR [" + this.clientNumber + "]" + e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
             } catch (IOException e) {
-                logger.printToLogger("[" + this.clientNumber + "] " + this.username + " Disconnected from server");
+                PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), this.username + " Disconnected from server");
                 PlaceServer.removeClient(this);
                 break;
             }

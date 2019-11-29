@@ -10,10 +10,12 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import place.PlaceColor;
+import place.PlaceException;
 import place.PlaceTile;
 import place.model.ClientModel;
 import place.model.NetworkClient;
 import place.model.Observer;
+import place.server.PlaceLogger;
 
 import java.util.List;
 import java.util.Objects;
@@ -115,8 +117,13 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
                 Tile tile = new Tile(this.model.getTiles()[r][c], WINDOW_SIDE / model.getDim());
 
                 tile.setOnMouseClicked(e -> {
-                    if(this.selectedColor != null && e.getButton() == MouseButton.PRIMARY && this.serverConnection.isReady()) {
-                        this.serverConnection.sendTileChange(new PlaceTile(tile.getTile().getRow(), tile.getTile().getCol(), this.username , this.selectedColor));
+                    if(this.selectedColor != null && e.getButton() == MouseButton.PRIMARY) {
+                        try {
+                            this.serverConnection.sendTileChange(new PlaceTile(tile.getTile().getRow(), tile.getTile().getCol(), this.username , this.selectedColor));
+                        } catch (PlaceException ex) {
+                            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), ex.getMessage());
+                            e.consume();
+                        }
                     } else {
                         e.consume();
                     }

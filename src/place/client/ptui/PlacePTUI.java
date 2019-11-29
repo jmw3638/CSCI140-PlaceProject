@@ -1,6 +1,7 @@
 package place.client.ptui;
 
 import place.PlaceColor;
+import place.PlaceException;
 import place.PlaceTile;
 import place.model.ClientModel;
 import place.model.NetworkClient;
@@ -81,10 +82,13 @@ public class PlacePTUI extends ConsoleApplication implements Observer<ClientMode
             if(row == -1) { System.exit(0); }
             int col = this.userIn.nextInt();
             int color = this.userIn.nextInt();
-            if(this.model.isValidMove(row, col, color)) {
+            try {
+                done = true;
                 this.serverConnection.sendTileChange(new PlaceTile(row, col, this.username, PlaceColor.values()[color]));
                 this.userOut.println(this.userIn.nextLine());
-                done = true;
+            } catch(PlaceException e) {
+                this.userOut.println("Invalid move");
+                done = false;
             }
         } while (!done);
     }

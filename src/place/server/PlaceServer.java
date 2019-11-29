@@ -31,8 +31,6 @@ public class PlaceServer {
     /** the clients currently logged in to the server */
     private static ArrayList<ClientHandler> clients;
 
-    private static Logger logger;
-
     /**
      * The main method starts the server
      *
@@ -43,14 +41,13 @@ public class PlaceServer {
             System.out.println("Usage: java PlaceServer port DIM");
             System.exit(1);
         } else {
-            logger = new Logger();
-            logger.printToLogger("Starting up server");
+            PlaceLogger.log(PlaceLogger.LogType.INFO, PlaceServer.class.getName(), "Starting up server");
             try {
                 serverSocket = new ServerSocket(Integer.parseInt(args[0]));
                 placeBoard = new PlaceBoard(Integer.parseInt(args[1]));
                 connectClients();
             } catch (IOException e) {
-                logger.printToLogger("ERROR [SERVER]" + e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.ERROR, PlaceServer.class.getName(), e.getMessage());
             }
         }
     }
@@ -108,10 +105,10 @@ public class PlaceServer {
      */
     private static void connectClients() throws IOException {
         clients = new ArrayList<>();
-        logger.printToLogger("Waiting for clients...");
+        PlaceLogger.log(PlaceLogger.LogType.INFO, PlaceServer.class.getName(), "Waiting for clients...");
         while(true) {
             Socket clientSocket = serverSocket.accept();
-            logger.printToLogger("[" + (clients.size() + 1) + "] New client connected");
+            PlaceLogger.log(PlaceLogger.LogType.DEBUG, PlaceServer.class.getName(), "New client connected, assigned number: " + (clients.size() + 1));
 
             ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());

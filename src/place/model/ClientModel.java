@@ -32,7 +32,7 @@ public class ClientModel {
     /**
      * Notify observers the model has changed.
      */
-    private void notifyObservers(PlaceTile tile, String serverMsg){
+    private void notifyObservers(PlaceTile tile){
         for (Observer<ClientModel, PlaceTile> observer: observers) {
             observer.update(this, tile);
         }
@@ -57,11 +57,11 @@ public class ClientModel {
      */
     void tileChanged(PlaceTile tile) {
         tiles[tile.getRow()][tile.getCol()] = tile;
-        notifyObservers(tile, tile.getOwner() + " set tile @ (" + tile.getRow() + ", " + tile.getCol() + ") to " + tile.getColor().getName());
+        notifyObservers(tile);
     }
 
     public boolean isValidMove(int row, int col, int color) {
-        return ( row >= 0 && row < getDim()) && ( col >= 0 && col < getDim() && ( color >= 0 && color < PlaceColor.TOTAL_COLORS ));
+        return (row >= 0 && row < getDim()) && (col >= 0 && col < getDim() && (color >= 0 && color < PlaceColor.TOTAL_COLORS));
     }
 
     /**
