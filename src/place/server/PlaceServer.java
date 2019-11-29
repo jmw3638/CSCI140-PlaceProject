@@ -70,7 +70,7 @@ public class PlaceServer {
      * @param msg the message
      */
     private static void report(String msg) {
-        System.out.println("Server > " + msg);
+        System.out.println(PlaceServer.class.getName() + " - Server > " + msg);
     }
 
     /**
@@ -78,7 +78,7 @@ public class PlaceServer {
      * @param msg the error message
      */
     private static void error(String msg) {
-        System.out.println("Error > " + msg);
+        System.out.println(PlaceServer.class.getName() + " - Error > " + msg);
         System.exit(1);
     }
 

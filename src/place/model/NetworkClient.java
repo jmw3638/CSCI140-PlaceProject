@@ -79,7 +79,7 @@ public class NetworkClient extends Thread {
      * @param msg the message
      */
     private void report(String msg) {
-        System.out.println("Client [" + this.username + "] > " + msg);
+        System.out.println(getClass().getName() + " - Client [" + this.username + "] > " + msg);
     }
 
     /**
@@ -88,7 +88,7 @@ public class NetworkClient extends Thread {
      * @param msg the error message
      */
     private void error(String msg) {
-        System.out.println("Error > " + msg);
+        System.out.println(getClass().getName() + " - Error > " + msg);
         System.exit(1);
     }
 
@@ -96,18 +96,21 @@ public class NetworkClient extends Thread {
      * Listen and handle server messages
      */
     @Override
-    public synchronized void run() {
+    public void run() {
         while (this.go) {
             try {
                 PlaceRequest<?> response = (PlaceRequest<?>) networkIn.readUnshared();
-
-                if (response.getType() == PlaceRequest.RequestType.TILE_CHANGED) {
-                    report(response.getData().toString());
-                    this.model.tileChanged((PlaceTile) response.getData());
-                } else if(response.getType() == PlaceRequest.RequestType.READY){
-                    this.ready = true;
-                } else {
-                    error("Unexpected type: " + response.getType());
+                switch(response.getType()) {
+                    case TILE_CHANGED:
+                        report(response.getData().toString());
+                        this.model.tileChanged((PlaceTile) response.getData());
+                        break;
+                    case READY:
+                        this.ready = true;
+                        break;
+                    default:
+                        error("Unexpected type: " + response.getType());
+                        break;
                 }
             } catch (IOException | ClassNotFoundException e) {
                 report(e.getMessage());
@@ -139,6 +142,7 @@ public class NetworkClient extends Thread {
     public void sendTileChange(PlaceTile tile) {
         try {
             this.ready = false;
+            report(tile.toString());
             networkOut.writeUnshared(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.CHANGE_TILE, tile));
             networkOut.flush();
         } catch (IOException e) {

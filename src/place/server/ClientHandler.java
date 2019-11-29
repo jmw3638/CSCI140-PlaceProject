@@ -48,14 +48,14 @@ public class ClientHandler extends Thread {
      * Reports a message to the server output
      * @param msg the message
      */
-    private void report(String msg) { System.out.println("Client-" + clientNum + " > " + msg); }
+    private void report(String msg) { System.out.println(getClass().getName() + " - Client-" + clientNum + " > " + msg); }
 
     /**
      * Reports and error to the server output then shuts down the program
      * @param msg the error message
      */
     private void error(String msg) {
-        System.out.println("Error-" + clientNum + " > " + msg);
+        System.out.println(getClass().getName() + " - Error-" + clientNum + " > " + msg);
         System.exit(1);
     }
 
@@ -63,13 +63,17 @@ public class ClientHandler extends Thread {
      * Send a message to the client
      * @param msg the message
      */
-    void write(PlaceRequest msg) {
-        try {
-            networkOut.writeUnshared(msg);
-            networkOut.flush();
-        } catch (IOException e) {
-            error(e.getMessage());
-        }
+    synchronized void write(PlaceRequest msg) {
+        //if(msg.getType().equals(PlaceRequest.RequestType.TILE_CHANGED)) {
+          //  report(msg.toString());
+        //} else {
+            try {
+                networkOut.writeUnshared(msg);
+                networkOut.flush();
+            } catch (IOException e) {
+                error(e.getMessage());
+            }
+        //}
     }
 
     /**
