@@ -24,9 +24,7 @@ public class PlaceBots {
             ClientModel model = new ClientModel();
             NetworkClient serverConnection = new NetworkClient(host, port, username, model);
             serverConnection.start();
-            logger.printToLogger("[" + i + "] Assigning new thread to " + username);
             Thread b = new Bot(i, serverConnection, model, username);
-            logger.printToLogger("[" + i + "] Starting thread for bot " + username);
             b.start();
         }
     }

@@ -116,9 +116,7 @@ public class PlaceServer {
             ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());
 
-            logger.printToLogger("[" + (clients.size() + 1) + "] Assigning new thread for client");
             Thread t = new ClientHandler(placeBoard, networkIn, networkOut, clients.size() + 1);
-            logger.printToLogger("[" + (clients.size() + 1) + "] Starting thread for client");
             t.start();
         }
     }
