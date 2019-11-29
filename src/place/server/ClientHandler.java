@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter;
  */
 public class ClientHandler extends Thread {
     /** the cool-down time between each user input */
-    private static final int PLACE_COOL_DOWN_TIME = 1000;
+    public static final int PLACE_COOL_DOWN_TIME = 1000;
     /** the incoming connection from the client */
     private ObjectInputStream networkIn;
     /** the outgoing connection to the client */

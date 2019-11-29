@@ -4,11 +4,13 @@ import place.PlaceColor;
 import place.PlaceTile;
 import place.model.ClientModel;
 import place.model.NetworkClient;
+import place.server.ClientHandler;
 import place.server.Logger;
 
 import java.util.Random;
 
 class Bot extends Thread {
+    private static final int BOT_MAX_COOL_DOWN_TIME = 10000;
     private NetworkClient serverConnection;
     private ClientModel model;
     private int botNumber;
@@ -27,7 +29,7 @@ class Bot extends Thread {
     public void run() {
         while(true) {
             try {
-                Thread.sleep(new Random().nextInt(9500) + 500);
+                Thread.sleep(new Random().nextInt(BOT_MAX_COOL_DOWN_TIME - ClientHandler.PLACE_COOL_DOWN_TIME) + ClientHandler.PLACE_COOL_DOWN_TIME);
             } catch (InterruptedException e) {
                 logger.printToLogger("ERROR [" + this.botNumber + "]" + e.getMessage());
             }
