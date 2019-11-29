@@ -3,6 +3,7 @@ package place.model;
 import place.PlaceBoard;
 import place.PlaceTile;
 import place.network.PlaceRequest;
+import place.server.Logger;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -24,12 +25,14 @@ public class NetworkClient extends Thread {
     private ObjectOutputStream networkOut;
     /** the client model */
     private ClientModel model;
-    /** the username of the client */
-    private String username;
+    /** the client number */
+    private int clientNumber;
     /** boolean value if the client should listen for server messages */
     private boolean go;
     /** boolean value if the client is ready to place another tile */
     private boolean ready;
+
+    private Logger logger;
 
     /**
      * Represents a new connection to the server
@@ -41,22 +44,23 @@ public class NetworkClient extends Thread {
             this.clientSocket = new Socket(host, port);
             this.networkOut = new ObjectOutputStream(this.clientSocket.getOutputStream());
             this.networkIn = new ObjectInputStream(this.clientSocket.getInputStream());
-            this.username = username;
             this.model = model;
+            this.logger = new Logger();
             this.go = true;
             this.ready = true;
 
-            networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, this.username));
+            networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, username));
 
             boolean ready = false;
             while (!ready) {
                 PlaceRequest<?> response = (PlaceRequest<?>) this.networkIn.readUnshared();
                 switch (response.getType()) {
                     case LOGIN_SUCCESS:
-                        report("Successfully logged in (Client-" + response.getData() + ")");
+                        this.clientNumber = Integer.parseInt(response.getData().toString());
+                        logger.printToLogger("[" + this.clientNumber + "] Successfully logged in with username: " + username);
                         break;
                     case ERROR:
-                        report("Failed to log in, username taken (" + response.getData() + ")");
+                        logger.printToLogger("[" + this.clientNumber + "] Failed to log in, username taken: " + username);
                         shutDown();
                         break;
                     case BOARD:
@@ -64,32 +68,13 @@ public class NetworkClient extends Thread {
                         ready = true;
                         break;
                     default:
-                        error("Unexpected type: " + response.getType());
+                        logger.printToLogger("ERROR [" + this.clientNumber + "] Unexpected type: " + response.getType());
                         break;
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
-            error(e.getMessage());
+            logger.printToLogger("ERROR [" + this.clientNumber + "]" + e.getMessage());
         }
-    }
-
-    /**
-     * Reports a message to the client output
-     *
-     * @param msg the message
-     */
-    private void report(String msg) {
-        System.out.println(getClass().getName() + " - Client [" + this.username + "] > " + msg);
-    }
-
-    /**
-     * Reports and error to the client output then shuts down the program
-     *
-     * @param msg the error message
-     */
-    private void error(String msg) {
-        System.out.println(getClass().getName() + " - Error > " + msg);
-        System.exit(1);
     }
 
     /**
@@ -102,18 +87,17 @@ public class NetworkClient extends Thread {
                 PlaceRequest<?> response = (PlaceRequest<?>) networkIn.readUnshared();
                 switch(response.getType()) {
                     case TILE_CHANGED:
-                        report(response.getData().toString());
                         this.model.tileChanged((PlaceTile) response.getData());
                         break;
                     case READY:
                         this.ready = true;
                         break;
                     default:
-                        error("Unexpected type: " + response.getType());
+                        logger.printToLogger("ERROR [" + this.clientNumber + "] Unexpected type: " + response.getType());
                         break;
                 }
             } catch (IOException | ClassNotFoundException e) {
-                report(e.getMessage());
+                logger.printToLogger("ERROR [" + this.clientNumber + "]" + e.getMessage());
                 shutDown();
             }
         }
@@ -131,7 +115,7 @@ public class NetworkClient extends Thread {
             clientSocket.close();
             System.exit(0);
         } catch (IOException e) {
-            error(e.getMessage());
+            logger.printToLogger("ERROR [" + this.clientNumber + "]" + e.getMessage());
         }
     }
 
@@ -141,12 +125,12 @@ public class NetworkClient extends Thread {
      */
     public void sendTileChange(PlaceTile tile) {
         try {
+            logger.printToLogger("[" + this.clientNumber + "] Sending " + tile);
             this.ready = false;
-            report(tile.toString());
             networkOut.writeUnshared(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.CHANGE_TILE, tile));
             networkOut.flush();
         } catch (IOException e) {
-            error(e.getMessage());
+            logger.printToLogger("ERROR [" + this.clientNumber + "]" + e.getMessage());
         }
     }
 

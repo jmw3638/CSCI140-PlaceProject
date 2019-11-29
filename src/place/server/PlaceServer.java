@@ -31,6 +31,8 @@ public class PlaceServer {
     /** the clients currently logged in to the server */
     private static ArrayList<ClientHandler> clients;
 
+    private static Logger logger;
+
     /**
      * The main method starts the server
      *
@@ -41,13 +43,14 @@ public class PlaceServer {
             System.out.println("Usage: java PlaceServer port DIM");
             System.exit(1);
         } else {
-            report("Starting up server");
+            logger = new Logger();
+            logger.printToLogger("Starting up server");
             try {
                 serverSocket = new ServerSocket(Integer.parseInt(args[0]));
                 placeBoard = new PlaceBoard(Integer.parseInt(args[1]));
                 connectClients();
             } catch (IOException e) {
-                error(e.getMessage());
+                logger.printToLogger("ERROR [SERVER]" + e.getMessage());
             }
         }
     }
@@ -63,23 +66,6 @@ public class PlaceServer {
         } else {
             throw new PlaceException("Invalid tile coordinates");
         }
-    }
-
-    /**
-     * Reports a message to the server output
-     * @param msg the message
-     */
-    private static void report(String msg) {
-        System.out.println(PlaceServer.class.getName() + " - Server > " + msg);
-    }
-
-    /**
-     * Reports and error to the server output then shuts down the program
-     * @param msg the error message
-     */
-    private static void error(String msg) {
-        System.out.println(PlaceServer.class.getName() + " - Error > " + msg);
-        System.exit(1);
     }
 
     /**
@@ -122,18 +108,17 @@ public class PlaceServer {
      */
     private static void connectClients() throws IOException {
         clients = new ArrayList<>();
-        report("Waiting for clients...");
+        logger.printToLogger("Waiting for clients...");
         while(true) {
             Socket clientSocket = serverSocket.accept();
-
-            report( "New client connected [" + (clients.size() + 1) + "]");
+            logger.printToLogger("[" + (clients.size() + 1) + "] New client connected");
 
             ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());
 
-            report("Assigning new thread for client [" + (clients.size() + 1 )+ "]");
+            logger.printToLogger("[" + (clients.size() + 1) + "] Assigning new thread for client");
             Thread t = new ClientHandler(placeBoard, networkIn, networkOut, clients.size() + 1);
-            report("Starting thread for client [" + (clients.size() + 1) + "]");
+            logger.printToLogger("[" + (clients.size() + 1) + "] Starting thread for client");
             t.start();
         }
     }
