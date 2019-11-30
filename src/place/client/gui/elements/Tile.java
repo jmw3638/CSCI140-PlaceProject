@@ -1,4 +1,4 @@
-package place.client.gui;
+package place.client.gui.elements;
 
 import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * Represents a GUI tile on the place board. Contains information
  * such as its location, the actual PlaceTile object it holds, and
- * its tool tip.
+ * its Tooltip.
  *
  * @author Jake Waclawski
  */
@@ -21,11 +21,11 @@ public class Tile extends Rectangle implements Serializable {
     private PlaceTile tile;
 
     /**
-     * Create a new Tile object and initialize its appearance on the GUI board
+     * Create a new Tile object and initialize its appearance on the GUI board.
      * @param tile the PlaceTile object to store
      * @param side the side length of the rectangle
      */
-    Tile(PlaceTile tile, int side) {
+    public Tile(PlaceTile tile, int side) {
         this.setWidth(side);
         this.setHeight(side);
         this.setFill(Color.rgb(tile.getColor().getRed(), tile.getColor().getGreen(), tile.getColor().getBlue()));
@@ -36,10 +36,10 @@ public class Tile extends Rectangle implements Serializable {
     }
 
     /**
-     * Re-set the PlaceTile object to store
+     * Re-set the PlaceTile object to store.
      * @param tile the PlaceTile object
      */
-    void setTile(PlaceTile tile) {
+    public void setTile(PlaceTile tile) {
         this.tile = tile;
         this.setFill(Color.rgb(tile.getColor().getRed(), tile.getColor().getGreen(), tile.getColor().getBlue()));
         info.setText("(" + tile.getRow() + ", " + tile.getCol() + ") " +
@@ -47,7 +47,7 @@ public class Tile extends Rectangle implements Serializable {
     }
 
     /**
-     * Get the PlaceTile object stored in the tile
+     * Get the PlaceTile object stored in the tile.
      * @return the PlaceTile
      */
     public PlaceTile getTile() { return this.tile; }

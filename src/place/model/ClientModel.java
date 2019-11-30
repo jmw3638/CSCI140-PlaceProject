@@ -22,7 +22,6 @@ public class ClientModel {
 
     /**
      * Add a new observer.
-     *
      * @param observer the new observer
      */
     public void addObserver(Observer<ClientModel, PlaceTile> observer) {
@@ -31,6 +30,7 @@ public class ClientModel {
 
     /**
      * Notify observers the model has changed.
+     * @param tile the changed tile
      */
     private void notifyObservers(PlaceTile tile){
         for (Observer<ClientModel, PlaceTile> observer: observers) {
@@ -39,7 +39,7 @@ public class ClientModel {
     }
 
     /**
-     * Initialize the board for the newly connected client
+     * Initialize the board for the newly connected client.
      * @param board the place board
      */
     static void initBoard(PlaceBoard board) {
@@ -52,7 +52,20 @@ public class ClientModel {
     }
 
     /**
-     * Change a tile on the client side board
+     * Determines if a tile change request is valid. A change is only
+     * valid if the row and column are within the dimensions of the
+     * place board and if the color is a valid place color.
+     * @param row the row to check
+     * @param col the column to check
+     * @param color the color to check
+     * @return if the change request is valid
+     */
+    boolean isValidChange(int row, int col, int color) {
+        return (row >= 0 && row < getDim()) && (col >= 0 && col < getDim() && (color >= 0 && color < PlaceColor.TOTAL_COLORS));
+    }
+
+    /**
+     * Change a tile on the client side board.
      * @param tile the tile to change
      */
     void tileChanged(PlaceTile tile) {
@@ -60,18 +73,14 @@ public class ClientModel {
         notifyObservers(tile);
     }
 
-    public boolean isValidMove(int row, int col, int color) {
-        return (row >= 0 && row < getDim()) && (col >= 0 && col < getDim() && (color >= 0 && color < PlaceColor.TOTAL_COLORS));
-    }
-
     /**
-     * Get the matrix of place tiles
+     * Get the matrix of place tiles.
      * @return the tiles
      */
     public PlaceTile[][] getTiles() { return tiles; }
 
     /**
-     * Get the dimension of the board
+     * Get the dimensions of the board.
      * @return the dimension
      */
     public int getDim() { return tiles.length; }

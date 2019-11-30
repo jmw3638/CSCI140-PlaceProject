@@ -83,8 +83,8 @@ public abstract class ConsoleApplication {
      *             be instantiated
      * @param args the array of strings from the command line
      */
-    public static void launch(
-            Class< ? extends ConsoleApplication > ptuiClass,
+    static void launch(
+            Class<? extends ConsoleApplication> ptuiClass,
             String[] args
     ) {
         try {
@@ -116,7 +116,7 @@ public abstract class ConsoleApplication {
     private static class Runner implements Runnable {
         private final ConsoleApplication ptuiApp;
 
-        public Runner( ConsoleApplication ptuiApp ) { this.ptuiApp = ptuiApp; }
+        Runner(ConsoleApplication ptuiApp) { this.ptuiApp = ptuiApp; }
 
         public void run() {
             // We don't put the PrintWriter in try-with-resources because
@@ -146,7 +146,7 @@ public abstract class ConsoleApplication {
      * @return the string array that was passed to launch, if any, or else
      *         an empty array
      */
-    public List< String > getArguments() {
+    List< String > getArguments() {
         return Arrays.asList( this.cmdLineArgs );
     }
 

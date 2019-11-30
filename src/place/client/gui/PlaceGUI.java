@@ -12,6 +12,9 @@ import javafx.stage.Stage;
 import place.PlaceColor;
 import place.PlaceException;
 import place.PlaceTile;
+import place.client.gui.elements.ColorSelection;
+import place.client.gui.elements.Tile;
+import place.client.gui.elements.ZoomableScrollPane;
 import place.model.ClientModel;
 import place.model.NetworkClient;
 import place.model.Observer;
@@ -47,6 +50,20 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     private ScrollPane scrollPane;
     /** the collection of ColorSection objects */
     private HBox colorSelect;
+
+    /**
+     * The main method starts the GUI client.
+     *
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        if (args.length != 3) {
+            PlaceLogger.log(PlaceLogger.LogType.ERROR, PlaceGUI.class.getName(), "Usage: java PlaceGUI host port username");
+            System.exit(0);
+        } else {
+            Application.launch(args);
+        }
+    }
 
     /**
      * Create network connection based on command line parameters.
@@ -137,8 +154,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
 
     /**
      * Creates and returns the collection of ColorSelection objects and stores
-     * them into an HBox. When a color is clicked, set it as the
-     * selected color.
+     * them into an HBox. When a color is clicked, set it as the selected color.
      * @return the HBox of ColorSection objects
      */
     private HBox createColorSelect() {
@@ -151,6 +167,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
                         ((ColorSelection) n).setSelected(false);
                     }
                     colorSelTile.setSelected(true);
+                    PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Selected color: " + this.selectedColor);
                 } else {
                     e.consume();
                 }
@@ -163,30 +180,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     }
 
     /**
-     * Request from the client model to update the GUI
-     * @param model the client model
-     * @param tile the tile to update
-     */
-    @Override
-    public void update(ClientModel model, PlaceTile tile) {
-        if(Platform.isFxApplicationThread()) {
-            this.refresh(tile);
-        }
-        else{
-            Platform.runLater(() -> refresh(tile));
-        }
-    }
-
-    /**
-     * Updates the GUI and updates the specified tile
-     * @param tile the tile to update
-     */
-    private void refresh(PlaceTile tile) {
-        Objects.requireNonNull(getElement(tile.getRow(), tile.getCol())).setTile(tile);
-    }
-
-    /**
-     * Gets an element from the grid of tiles
+     * Gets an element from the grid of tiles.
      * @param col the column the tile is located
      * @param row the row the tile is located
      * @return the tile object; null if not found
@@ -201,17 +195,26 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
     }
 
     /**
-     * The main method starts the GUI client
-     *
-     * @param args the command line arguments
+     * Request from the client model to update the GUI.
+     * @param model the client model
+     * @param tile the tile to update
      */
-    public static void main(String[] args) {
-        if (args.length != 3) {
-            System.out.println("Usage: java PlaceGUI host port username");
-            System.exit(-1);
-        } else {
-            Application.launch(args);
+    @Override
+    public void update(ClientModel model, PlaceTile tile) {
+        if(Platform.isFxApplicationThread()) {
+            this.refresh(tile);
         }
+        else{
+            Platform.runLater(() -> refresh(tile));
+        }
+    }
+
+    /**
+     * Updates the GUI and updates the specified tile.
+     * @param tile the tile to update
+     */
+    private void refresh(PlaceTile tile) {
+        Objects.requireNonNull(getElement(tile.getRow(), tile.getCol())).setTile(tile);
     }
 }
 

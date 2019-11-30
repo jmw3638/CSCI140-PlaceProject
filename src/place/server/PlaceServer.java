@@ -24,22 +24,23 @@ import java.util.ArrayList;
  * @author Jake Waclawski
  */
 public class PlaceServer {
-    /** the server socket */
+    /** the server socket connection to the clients */
     private static ServerSocket serverSocket;
-    /** the place board */
+    /** the server-side place board */
     private static PlaceBoard placeBoard;
     /** the clients currently logged in to the server */
     private static ArrayList<ClientHandler> clients;
 
     /**
-     * The main method starts the server
+     * The main method starts the server and initializes the
+     * server-side place board.
      *
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.out.println("Usage: java PlaceServer port DIM");
-            System.exit(1);
+            PlaceLogger.log(PlaceLogger.LogType.ERROR, PlaceServer.class.getName(), "Usage: java PlaceServer port DIM");
+            System.exit(0);
         } else {
             PlaceLogger.log(PlaceLogger.LogType.INFO, PlaceServer.class.getName(), "Starting up server");
             try {
@@ -53,7 +54,38 @@ public class PlaceServer {
     }
 
     /**
-     * Attempt to update a tile on the server side place board
+     * Spawns and starts client threads each time a new client
+     * connects to the server.
+     * @throws IOException if a network error occurs
+     */
+    private static void connectClients() throws IOException {
+        clients = new ArrayList<>();
+        PlaceLogger.log(PlaceLogger.LogType.INFO, PlaceServer.class.getName(), "Waiting for clients...");
+        while(true) {
+            Socket clientSocket = serverSocket.accept();
+            PlaceLogger.log(PlaceLogger.LogType.DEBUG, PlaceServer.class.getName(), "New client connected, assigned number: " + (clients.size() + 1));
+
+            ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
+            ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());
+
+            Thread t = new ClientHandler(placeBoard, networkIn, networkOut);
+            t.start();
+        }
+    }
+
+    /**
+     * Send a message to all clients currently connected to the server.
+     * Individually calls each client's write() method.
+     * @param msg the message to send
+     */
+    static void sendToAll(PlaceRequest msg) {
+        for(ClientHandler c : PlaceServer.clients){
+            c.write(msg);
+        }
+    }
+
+    /**
+     * Attempt to update a tile on the server-side place board.
      * @param tile the tile to update
      * @throws PlaceException if the tile coordinates are invalid
      */
@@ -66,18 +98,8 @@ public class PlaceServer {
     }
 
     /**
-     * Send a message to all clients connected to the server
-     * @param msg the message
-     */
-    static void sendToAll(PlaceRequest msg) {
-        for(ClientHandler c : PlaceServer.clients){
-            c.write(msg);
-        }
-    }
-
-    /**
      * Add a client to the list of clients. Only adds the client if its username
-     * is now already being currently used
+     * is not already currently taken.
      * @param client the client to add
      * @return if the client was able to be added
      */
@@ -92,29 +114,10 @@ public class PlaceServer {
     }
 
     /**
-     * Remove a client from the list of clients
+     * Remove a client from the list of clients.
      * @param client the client to remove
      */
     static void removeClient(ClientHandler client) {
         clients.remove(client);
-    }
-
-    /**
-     * Spawns client threads each time a new client connects.
-     * @throws IOException if a network error occurs
-     */
-    private static void connectClients() throws IOException {
-        clients = new ArrayList<>();
-        PlaceLogger.log(PlaceLogger.LogType.INFO, PlaceServer.class.getName(), "Waiting for clients...");
-        while(true) {
-            Socket clientSocket = serverSocket.accept();
-            PlaceLogger.log(PlaceLogger.LogType.DEBUG, PlaceServer.class.getName(), "New client connected, assigned number: " + (clients.size() + 1));
-
-            ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
-            ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());
-
-            Thread t = new ClientHandler(placeBoard, networkIn, networkOut, clients.size() + 1);
-            t.start();
-        }
     }
 }

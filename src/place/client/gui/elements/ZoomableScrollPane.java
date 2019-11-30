@@ -1,4 +1,4 @@
-package place.client.gui;
+package place.client.gui.elements;
 
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -11,14 +11,16 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 
 /**
- * Represents a JavaFX ScrollPane that is zoomable
+ * Represents a JavaFX ScrollPane that is also zoomable.
+ *
+ * @author Jake Waclawski
  */
-class ZoomableScrollPane extends ScrollPane {
+public class ZoomableScrollPane extends ScrollPane {
     private double scaleValue = 1.0;
     private Node target;
     private Node zoomNode;
 
-    ZoomableScrollPane(Node target) {
+    public ZoomableScrollPane(Node target) {
         super();
         this.target = target;
         this.zoomNode = new Group(target);
