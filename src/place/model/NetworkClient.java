@@ -26,10 +26,14 @@ public class NetworkClient extends Thread {
     private ObjectOutputStream networkOut;
     /** the client model */
     private ClientModel model;
+    /** the client's number */
+    private int clientNumber;
     /** boolean value if the client should listen for server messages */
     private boolean go;
     /** boolean value if the client is ready to place another tile */
     private boolean ready;
+    /** using local time format? */
+    private boolean localTimeFormat;
 
     /**
      * Represents a client connected to the network.
@@ -47,13 +51,24 @@ public class NetworkClient extends Thread {
             this.go = true;
             this.ready = true;
 
+            this.localTimeFormat = true;
+
             networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, username));
 
             boolean proceed = false;
             while (!proceed) {
                 PlaceRequest<?> response = (PlaceRequest<?>) this.networkIn.readUnshared();
+                PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Server " + response.toString());
                 switch (response.getType()) {
                     case LOGIN_SUCCESS:
+                        try {
+                            this.clientNumber = (Integer) response.getData();
+                        } catch(Exception e) {
+                            this.clientNumber = -1;
+                            this.localTimeFormat = false;
+                            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
+                        }
+                        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Assigned client number: " + this.clientNumber);
                         PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Successfully logged in with username: " + username);
                         break;
                     case ERROR:
@@ -62,6 +77,7 @@ public class NetworkClient extends Thread {
                         break;
                     case BOARD:
                         ClientModel.initBoard((PlaceBoard) response.getData());
+                        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "PlaceBoard received from server and initialized");
                         proceed = true;
                         break;
                     default:
@@ -69,10 +85,10 @@ public class NetworkClient extends Thread {
                         break;
                 }
             }
-        } catch (IOException e) {
-            PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), e.getMessage());
         } catch (ClassNotFoundException e) {
             PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
+        } catch (IOException e) {
+            PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), e.getMessage());
         }
     }
 
@@ -85,6 +101,7 @@ public class NetworkClient extends Thread {
         while (this.go) {
             try {
                 PlaceRequest<?> response = (PlaceRequest<?>) networkIn.readUnshared();
+                PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Server " + response.toString());
                 switch(response.getType()) {
                     case TILE_CHANGED:
                         PlaceTile tile = (PlaceTile) response.getData();
@@ -99,10 +116,9 @@ public class NetworkClient extends Thread {
                         break;
                 }
             } catch (IOException e) {
-                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
-                shutDown();
+                PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), e.getMessage());
             } catch (ClassNotFoundException e) {
-                PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
             }
         }
     }
@@ -114,11 +130,11 @@ public class NetworkClient extends Thread {
      */
     public void sendTileChange(PlaceTile tile) throws PlaceException {
         if(ready) {
-            PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Chose: " + tile);
+            PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(),"Client " + this.clientNumber + " chose: " + tile);
             if (this.model.isValidChange(tile.getRow(), tile.getCol(), tile.getColor().getNumber())) {
                 try {
                     PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Sending: " + tile);
-                    this.ready = false;
+                    if(localTimeFormat) { this.ready = false; }
                     networkOut.writeUnshared(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.CHANGE_TILE, tile));
                     networkOut.flush();
                 } catch (IOException e) {
@@ -129,7 +145,7 @@ public class NetworkClient extends Thread {
                 PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
                 throw e;
             }
-        } else { PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Failed to choose tile: on cool-down");}
+        } else { PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Failed to choose tile: on cool-down"); }
     }
 
     /**
@@ -139,13 +155,14 @@ public class NetworkClient extends Thread {
     public void shutDown() {
         this.go = false;
         try {
-            PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Shutting down network connection");
+            PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Client " + this.clientNumber + " shutting down network connection");
+            PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Logging out of server");
             clientSocket.shutdownOutput();
             clientSocket.shutdownInput();
             clientSocket.close();
             System.exit(0);
         } catch (IOException e) {
-            PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
+            PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), e.getMessage());
         }
     }
 }

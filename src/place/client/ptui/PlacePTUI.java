@@ -37,8 +37,7 @@ public class PlacePTUI extends ConsoleApplication implements Observer<ClientMode
      */
     public static void main(String[] args) {
         if (args.length != 3) {
-            PlaceLogger.log(PlaceLogger.LogType.ERROR, PlacePTUI.class.getName(), "Usage: java PlaceClient host port username");
-            System.exit(0);
+            PlaceLogger.log(PlaceLogger.LogType.FATAL, PlacePTUI.class.getName(), "Usage: java PlaceClient host port username");
         }
         else {
             ConsoleApplication.launch(PlacePTUI.class, args);
@@ -78,8 +77,7 @@ public class PlacePTUI extends ConsoleApplication implements Observer<ClientMode
             this.userOut.flush();
             int row = this.userIn.nextInt();
             if(row == -1) {
-                PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Disconnecting from server");
-                System.exit(0);
+                stop();
             }
             int col = this.userIn.nextInt();
             int color = this.userIn.nextInt();
@@ -124,8 +122,12 @@ public class PlacePTUI extends ConsoleApplication implements Observer<ClientMode
      */
     @Override
     public void stop() {
+        PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Disconnecting from server");
+
         this.userIn.close();
         this.userOut.close();
         this.serverConnection.shutDown();
+
+        System.exit(0);
     }
 }

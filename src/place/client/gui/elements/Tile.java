@@ -30,9 +30,16 @@ public class Tile extends Rectangle implements Serializable {
         this.setHeight(side);
         this.setFill(Color.rgb(tile.getColor().getRed(), tile.getColor().getGreen(), tile.getColor().getBlue()));
         this.tile = tile;
+        this.info = new Tooltip();
 
-        this.info = new Tooltip("(" + tile.getRow() + ", " + tile.getCol() + ") " + tile.getColor().getName() + "\noriginal tile");
         Tooltip.install(this, info);
+
+        if(tile.getTime() == 0) {
+            info.setText("(" + tile.getRow() + ", " + tile.getCol() + ") " + tile.getColor().getName() + "\noriginal tile");
+        } else {
+            info.setText("(" + tile.getRow() + ", " + tile.getCol() + ") " +
+                    tile.getColor().getName() + "\n" + tile.getOwner() + "\n" + tile.getTime());
+        }
     }
 
     /**

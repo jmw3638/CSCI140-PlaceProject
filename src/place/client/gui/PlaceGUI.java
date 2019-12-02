@@ -58,8 +58,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      */
     public static void main(String[] args) {
         if (args.length != 3) {
-            PlaceLogger.log(PlaceLogger.LogType.ERROR, PlaceGUI.class.getName(), "Usage: java PlaceGUI host port username");
-            System.exit(0);
+            PlaceLogger.log(PlaceLogger.LogType.FATAL, PlaceGUI.class.getName(), "Usage: java PlaceGUI host port username");
         } else {
             Application.launch(args);
         }

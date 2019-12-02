@@ -9,7 +9,7 @@ package place.server;
  */
 public class PlaceLogger {
     /** enable or disable debugging messages */
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     /** enable or disable error messages */
     private static final boolean ERROR = true;
     /** enable or disable warning messages */
@@ -71,23 +71,23 @@ public class PlaceLogger {
     public static void log(LogType type, String className, String msg) {
         switch(type) {
             case INFO:
-                if(INFO) { System.out.println(ANSI_GREEN + "INFO : " + className + " : " + msg + ANSI_RESET); }
+                if(INFO) { System.out.println(ANSI_GREEN + "[INFO] " + className + " | " + msg + ANSI_RESET); }
                 break;
             case WARN:
-                if(WARN) { System.out.println(ANSI_YELLOW + "WARN : " + className + " : " + msg + ANSI_RESET); }
+                if(WARN) { System.out.println(ANSI_YELLOW + "[WARN] " + className + " | " + msg + ANSI_RESET); }
                 break;
             case ERROR:
-                if(ERROR) { System.out.println(ANSI_RED + "ERROR : " + className + " : " + msg + ANSI_RESET); }
+                if(ERROR) { System.out.println(ANSI_RED + "[ERROR] " + className + " | " + msg + ANSI_RESET); }
                 break;
             case FATAL:
-                System.out.println(ANSI_PURPLE + "FATAL ERROR : " + className + " : " + msg + ANSI_RESET);
+                System.out.println(ANSI_PURPLE + "[ERROR] " + className + " | " + msg + ANSI_RESET);
                 System.exit(1);
                 break;
             case DEBUG:
-                if(DEBUG) { System.out.println(ANSI_BLUE + "DEBUG : " + className + " : " + msg + ANSI_RESET); }
+                if(DEBUG) { System.out.println(ANSI_BLUE + "[DEBUG] " + className + " | " + msg + ANSI_RESET); }
                 break;
             default:
-                System.out.println(ANSI_RED + "ERROR : " + PlaceLogger.class.getName() + " : Invalid logging type" + ANSI_RESET);
+                System.out.println(ANSI_RED + "[ERROR] " + PlaceLogger.class.getName() + " | Invalid logging type" + ANSI_RESET);
                 break;
         }
     }

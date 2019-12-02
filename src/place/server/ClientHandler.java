@@ -8,8 +8,7 @@ import place.network.PlaceRequest;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 /**
  * Represents a client thread and handles all messages
@@ -28,6 +27,8 @@ public class ClientHandler extends Thread {
     private PlaceBoard placeBoard;
     /** the client's username */
     private String username;
+    /** the client's number */
+    private int clientNumber;
 
     /**
      * Create a new connection to a client.
@@ -35,10 +36,11 @@ public class ClientHandler extends Thread {
      * @param networkIn the incoming connection from the client
      * @param networkOut the outgoing connection to the client
      */
-    ClientHandler(PlaceBoard placeBoard, ObjectInputStream networkIn, ObjectOutputStream networkOut) {
+    ClientHandler(PlaceBoard placeBoard, ObjectInputStream networkIn, ObjectOutputStream networkOut, int clientNumber) {
         this.placeBoard = placeBoard;
         this.networkIn = networkIn;
         this.networkOut = networkOut;
+        this.clientNumber = clientNumber;
     }
 
     /**
@@ -50,42 +52,45 @@ public class ClientHandler extends Thread {
         while(true) {
             try {
                 PlaceRequest<?> response = (PlaceRequest<?>) networkIn.readUnshared();
+                PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Client " + this.clientNumber + " " + response.toString());
                 switch (response.getType()){
                     case LOGIN:
                         String user = (String) response.getData();
                         this.username = user;
                         if(PlaceServer.addClient(this)){
+                            PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Client " + this.clientNumber + " connected to server with username: " + user);
                             PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), user + " logged in to server");
-                            write(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, null));
-                            write(new PlaceRequest<PlaceBoard>(PlaceRequest.RequestType.BOARD, this.placeBoard));
+                            write(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN_SUCCESS, this.clientNumber));
+                            write(new PlaceRequest<>(PlaceRequest.RequestType.BOARD, this.placeBoard));
                         } else {
                             PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), user + " failed to log in (username taken).");
                             write(new PlaceRequest<>(PlaceRequest.RequestType.ERROR, response.getData()));
                         }
                         break;
                     case CHANGE_TILE:
-                        DateTimeFormatter dateTime = DateTimeFormatter.ofPattern("MM/dd/yyyy @ h:mm:ss a");
-                        LocalDateTime now = LocalDateTime.now();
-
                         PlaceTile tile = (PlaceTile) response.getData();
-                        tile.setTime(dateTime.format(now));
+
+                        Date date = new Date();
+                        long timeMilliseconds = date.getTime();
+                        tile.setTime(timeMilliseconds);
 
                         PlaceServer.updateTile(tile);
-                        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Updating: " + tile);
-                        PlaceServer.sendToAll(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.TILE_CHANGED, tile));
+                        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Client " + this.clientNumber + " updating: " + tile);
+                        PlaceServer.sendToAll(new PlaceRequest<>(PlaceRequest.RequestType.TILE_CHANGED, tile));
+
                         Thread.sleep(PLACE_COOL_DOWN_TIME);
+
                         write(new PlaceRequest<>(PlaceRequest.RequestType.READY, null));
                         break;
                     default:
-                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), "Unexpected type: " + response.getType());
+                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), "Client " + this.clientNumber + " : Unexpected type: " + response.getType());
                         break;
                 }
-            } catch (ClassNotFoundException | InterruptedException e) {
-                PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
-            } catch (PlaceException e) {
-                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
+            } catch (ClassNotFoundException | InterruptedException | PlaceException e) {
+                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), "Client " + this.clientNumber + " : " + e.getMessage());
             } catch (IOException e) {
-                PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), this.username + " Disconnected from server");
+                PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Client " + this.clientNumber + " disconnected from server");
+                PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), this.username + " logged out of server");
                 PlaceServer.removeClient(this);
                 break;
             }
@@ -101,7 +106,7 @@ public class ClientHandler extends Thread {
             networkOut.writeUnshared(msg);
             networkOut.flush();
         } catch (IOException e) {
-            PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
+            PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), "Client " + this.clientNumber + " : " + e.getMessage());
         }
     }
 

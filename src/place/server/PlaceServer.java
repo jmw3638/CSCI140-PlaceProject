@@ -39,13 +39,15 @@ public class PlaceServer {
      */
     public static void main(String[] args) {
         if (args.length != 2) {
-            PlaceLogger.log(PlaceLogger.LogType.ERROR, PlaceServer.class.getName(), "Usage: java PlaceServer port DIM");
-            System.exit(0);
+            PlaceLogger.log(PlaceLogger.LogType.FATAL, PlaceServer.class.getName(), "Usage: java PlaceServer port DIM");
         } else {
             PlaceLogger.log(PlaceLogger.LogType.INFO, PlaceServer.class.getName(), "Starting up server");
             try {
-                serverSocket = new ServerSocket(Integer.parseInt(args[0]));
-                placeBoard = new PlaceBoard(Integer.parseInt(args[1]));
+                int port = Integer.parseInt(args[0]);
+                int dim = Integer.parseInt(args[1]);
+                serverSocket = new ServerSocket(port);
+                placeBoard = new PlaceBoard(dim);
+                PlaceLogger.log(PlaceLogger.LogType.DEBUG, PlaceServer.class.getName(), "Server started on port: " + port);
                 connectClients();
             } catch (IOException e) {
                 PlaceLogger.log(PlaceLogger.LogType.ERROR, PlaceServer.class.getName(), e.getMessage());
@@ -63,12 +65,12 @@ public class PlaceServer {
         PlaceLogger.log(PlaceLogger.LogType.INFO, PlaceServer.class.getName(), "Waiting for clients...");
         while(true) {
             Socket clientSocket = serverSocket.accept();
-            PlaceLogger.log(PlaceLogger.LogType.DEBUG, PlaceServer.class.getName(), "New client connected, assigned number: " + (clients.size() + 1));
+            PlaceLogger.log(PlaceLogger.LogType.DEBUG, PlaceServer.class.getName(), "New client connected, assigned number: " + clients.size());
 
             ObjectOutputStream networkOut = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream networkIn = new ObjectInputStream(clientSocket.getInputStream());
 
-            Thread t = new ClientHandler(placeBoard, networkIn, networkOut);
+            Thread t = new ClientHandler(placeBoard, networkIn, networkOut, clients.size());
             t.start();
         }
     }

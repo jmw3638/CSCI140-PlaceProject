@@ -52,7 +52,7 @@ class Bot extends Thread {
                 int col = new Random().nextInt(this.model.getDim());
                 int color = new Random().nextInt(PlaceColor.TOTAL_COLORS);
                 PlaceTile tile = new PlaceTile(row, col, this.username, PlaceColor.values()[color]);
-                PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), " Chose: " + tile);
+                PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Bot choosing: " + tile);
                 this.serverConnection.sendTileChange(tile);
             } catch (PlaceException e) {
                 PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
@@ -61,4 +61,10 @@ class Bot extends Thread {
             }
         }
     }
+
+    /**
+     * Get the bot's username.
+     * @return the username
+     */
+    String getUsername() { return this.username; }
 }
