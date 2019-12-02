@@ -32,8 +32,8 @@ public class NetworkClient extends Thread {
     private boolean go;
     /** boolean value if the client is ready to place another tile */
     private boolean ready;
-    /** using local time format? */
-    private boolean localTimeFormat;
+    /** boolean value if using local server format, false if using cs.rit.edu servers */
+    private boolean localServerFormat;
 
     /**
      * Represents a client connected to the network.
@@ -50,8 +50,7 @@ public class NetworkClient extends Thread {
             this.model = model;
             this.go = true;
             this.ready = true;
-
-            this.localTimeFormat = true;
+            this.localServerFormat = true;
 
             networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, username));
 
@@ -65,7 +64,7 @@ public class NetworkClient extends Thread {
                             this.clientNumber = (Integer) response.getData();
                         } catch(Exception e) {
                             this.clientNumber = -1;
-                            this.localTimeFormat = false;
+                            this.localServerFormat = false;
                             PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
                         }
                         PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Assigned client number: " + this.clientNumber);
@@ -134,8 +133,8 @@ public class NetworkClient extends Thread {
             if (this.model.isValidChange(tile.getRow(), tile.getCol(), tile.getColor().getNumber())) {
                 try {
                     PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Sending: " + tile);
-                    if(localTimeFormat) { this.ready = false; }
-                    networkOut.writeUnshared(new PlaceRequest<PlaceTile>(PlaceRequest.RequestType.CHANGE_TILE, tile));
+                    if(localServerFormat) { this.ready = false; }
+                    networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.CHANGE_TILE, tile));
                     networkOut.flush();
                 } catch (IOException e) {
                     PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());

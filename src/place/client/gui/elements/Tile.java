@@ -6,6 +6,8 @@ import javafx.scene.shape.Rectangle;
 import place.PlaceTile;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 /**
  * Represents a GUI tile on the place board. Contains information
@@ -15,6 +17,8 @@ import java.io.Serializable;
  * @author Jake Waclawski
  */
 public class Tile extends Rectangle implements Serializable {
+    /** the date and time format for displaying the tile time */
+    private final DateFormat DATE_TIME_FORMAT = new SimpleDateFormat("M/d/yyyy h:mm:ss.SSS a");
     /** the tooltip information to show when hovered over */
     private Tooltip info;
     /** the PlaceTile object stored in the tile */
@@ -38,7 +42,7 @@ public class Tile extends Rectangle implements Serializable {
             info.setText("(" + tile.getRow() + ", " + tile.getCol() + ") " + tile.getColor().getName() + "\noriginal tile");
         } else {
             info.setText("(" + tile.getRow() + ", " + tile.getCol() + ") " +
-                    tile.getColor().getName() + "\n" + tile.getOwner() + "\n" + tile.getTime());
+                    tile.getColor().getName() + "\n" + tile.getOwner() + "\n" + DATE_TIME_FORMAT.format(tile.getTime()));
         }
     }
 
@@ -50,7 +54,7 @@ public class Tile extends Rectangle implements Serializable {
         this.tile = tile;
         this.setFill(Color.rgb(tile.getColor().getRed(), tile.getColor().getGreen(), tile.getColor().getBlue()));
         info.setText("(" + tile.getRow() + ", " + tile.getCol() + ") " +
-                tile.getColor().getName() + "\n" + tile.getOwner() + "\n" + tile.getTime());
+                tile.getColor().getName() + "\n" + tile.getOwner() + "\n" + DATE_TIME_FORMAT.format(tile.getTime()));
     }
 
     /**

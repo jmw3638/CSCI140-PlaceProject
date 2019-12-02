@@ -19,7 +19,7 @@ import java.util.Random;
  */
 class Bot extends Thread {
     /** the maximum amount of time between bot tile updates */
-    private static final int BOT_MAX_COOL_DOWN_TIME = 10000;
+    private static final int BOT_MAX_COOL_DOWN_TIME = 1001;
     /** the connection to the server */
     private NetworkClient serverConnection;
     /** the model for the game */
@@ -58,6 +58,8 @@ class Bot extends Thread {
                 PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
             } catch (InterruptedException e) {
                 PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
+            } catch (Exception e) {
+                PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), e.getMessage());
             }
         }
     }
