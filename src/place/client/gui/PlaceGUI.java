@@ -18,7 +18,7 @@ import place.client.gui.elements.ZoomableScrollPane;
 import place.model.ClientModel;
 import place.model.NetworkClient;
 import place.model.Observer;
-import place.server.PlaceLogger;
+import place.PlaceLogger;
 
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +84,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
         this.tiles = new GridPane();
         this.scrollPane = new ScrollPane();
         this.colorSelect = new HBox();
+        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Declared JavaFX elements");
     }
 
     /**
@@ -93,16 +94,21 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      */
     @Override
     public void start(Stage primaryStage) {
+        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Initializing JavaFX elements...");
+
         Scene scene = new Scene(placeWindow, WINDOW_SIDE, WINDOW_SIDE + COLOR_SELECTION_HEIGHT);
 
-        this.placeWindow.setCenter(new ZoomableScrollPane(createTiles()));
+        this.placeWindow.setCenter(new ZoomableScrollPane(createTiles(), this.model.getDim()));
         this.placeWindow.setBottom(createColorSelect());
         this.colorSelect.setAlignment(Pos.CENTER);
         this.scrollPane.setContent(tiles);
 
+
         primaryStage.setScene(scene);
         primaryStage.setTitle("Place: " + username);
         primaryStage.setOnCloseRequest(e -> { serverConnection.shutDown(); });
+
+        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Showing GUI");
         primaryStage.show();
 
         this.model.addObserver(this);
@@ -116,6 +122,7 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      */
     private Pane createTiles() {
         int dim = this.model.getDim();
+        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Creating tiles with board dimension of " + dim);
         RowConstraints rowC = new RowConstraints();
         rowC.setPercentHeight(100.0 / dim);
         ColumnConstraints colC = new ColumnConstraints();
@@ -131,13 +138,13 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
         for(int r = 0; r < dim; r++){
             for(int c = 0; c < dim; c++){
                 Tile tile = new Tile(this.model.getTiles()[r][c], WINDOW_SIDE / model.getDim());
-
+                PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "New tile created at (" + r + ", " + c + ")");
                 tile.setOnMouseClicked(e -> {
                     if(this.selectedColor != null && e.getButton() == MouseButton.PRIMARY) {
                         try {
                             this.serverConnection.sendTileChange(new PlaceTile(tile.getTile().getRow(), tile.getTile().getCol(), this.username , this.selectedColor));
                         } catch (PlaceException ex) {
-                            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), ex.getMessage());
+                            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), ex.getMessage());
                             e.consume();
                         }
                     } else {

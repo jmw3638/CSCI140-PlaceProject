@@ -2,6 +2,7 @@ package place.server;
 
 import place.PlaceBoard;
 import place.PlaceException;
+import place.PlaceLogger;
 import place.PlaceTile;
 import place.network.PlaceRequest;
 
@@ -81,8 +82,12 @@ public class PlaceServer {
      * @param msg the message to send
      */
     static void sendToAll(PlaceRequest msg) {
-        for(ClientHandler c : PlaceServer.clients){
-            c.write(msg);
+        try {
+            for(ClientHandler c : PlaceServer.clients){
+                c.write(msg);
+            }
+        } catch (Exception e) {
+            PlaceLogger.log(PlaceLogger.LogType.WARN, PlaceServer.class.getName(), PlaceLogger.getLineNumber(), e.toString());
         }
     }
 
@@ -106,12 +111,16 @@ public class PlaceServer {
      * @return if the client was able to be added
      */
     static boolean addClient(ClientHandler client) {
-        for(ClientHandler c : PlaceServer.clients){
+        for(ClientHandler c : clients){
             if(c.getUsername().equals(client.getUsername())){
                 return false;
             }
         }
         clients.add(client);
+        StringBuilder msg = new StringBuilder(clients.size() + " connected user(s): [ ");
+        for(ClientHandler c : clients) { msg.append(c.getUsername()).append(" , "); }
+        msg.append("]");
+        PlaceLogger.log(PlaceLogger.LogType.DEBUG, PlaceServer.class.getName(), msg.toString());
         return true;
     }
 

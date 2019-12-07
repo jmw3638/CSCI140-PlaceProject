@@ -1,4 +1,8 @@
-package place.server;
+package place;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * A custom class for logging and debugging the place project.
@@ -16,6 +20,9 @@ public class PlaceLogger {
     private static final boolean WARN = true;
     /** enable or disable general information messages */
     private static final boolean INFO = true;
+
+    /** the time format for displaying the current time */
+    private static final DateFormat TIME_FORMAT = new SimpleDateFormat("h:mm:ss.SSS");
 
     /**
      * Represents different console log output types. Each
@@ -63,32 +70,50 @@ public class PlaceLogger {
     private static final String ANSI_PURPLE = "\u001B[35m";
 
     /**
-     * Outputs a log message to the console.
+     * Outputs a log message to the console, without a line number given (setting it to 0 by default)
      * @param type the type of log message
      * @param className the class the log message originated
      * @param msg the actual log message to output
      */
-    public static void log(LogType type, String className, String msg) {
+    public static void log(LogType type, String className, String msg) { log(type, className, 0, msg); }
+
+    /**
+     * Outputs a log message to the console.
+     * @param type the type of log message
+     * @param className the class the log message originated
+     * @param line the line number the log message originated
+     * @param msg the actual log message to output
+     */
+    public static void log(LogType type, String className, int line, String msg) {
+        String lineNumber = ":" + line;
+        if(line == 0) { lineNumber = ""; }
+        String time = TIME_FORMAT.format(new Date());
         switch(type) {
             case INFO:
-                if(INFO) { System.out.println(ANSI_GREEN + "[INFO] " + className + " | " + msg + ANSI_RESET); }
+                if(INFO) { System.out.println(ANSI_GREEN + "INFO  | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET); }
                 break;
             case WARN:
-                if(WARN) { System.out.println(ANSI_YELLOW + "[WARN] " + className + " | " + msg + ANSI_RESET); }
-                break;
+                if(WARN) { System.out.println(ANSI_YELLOW + "WARN  | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET); }
+        break;
             case ERROR:
-                if(ERROR) { System.out.println(ANSI_RED + "[ERROR] " + className + " | " + msg + ANSI_RESET); }
+                if(ERROR) { System.out.println(ANSI_RED + "ERROR | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET); }
                 break;
             case FATAL:
-                System.out.println(ANSI_PURPLE + "[ERROR] " + className + " | " + msg + ANSI_RESET);
+                System.out.println(ANSI_PURPLE + "ERROR | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET);
                 System.exit(1);
                 break;
             case DEBUG:
-                if(DEBUG) { System.out.println(ANSI_BLUE + "[DEBUG] " + className + " | " + msg + ANSI_RESET); }
+                if(DEBUG) { System.out.println(ANSI_BLUE + "DEBUG | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET); }
                 break;
             default:
-                System.out.println(ANSI_RED + "[ERROR] " + PlaceLogger.class.getName() + " | Invalid logging type" + ANSI_RESET);
+                System.out.println(ANSI_RED + "ERROR | " + time + " | " + PlaceLogger.class.getName() + " > Invalid logging type" + ANSI_RESET);
                 break;
         }
     }
+
+    /**
+     * Get the current line number
+     * @return the line number
+     */
+    public static int getLineNumber() { return Thread.currentThread().getStackTrace()[2].getLineNumber(); }
 }

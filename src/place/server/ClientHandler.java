@@ -2,6 +2,7 @@ package place.server;
 
 import place.PlaceBoard;
 import place.PlaceException;
+import place.PlaceLogger;
 import place.PlaceTile;
 import place.network.PlaceRequest;
 
@@ -83,11 +84,11 @@ public class ClientHandler extends Thread {
                         write(new PlaceRequest<>(PlaceRequest.RequestType.READY, null));
                         break;
                     default:
-                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), "Client " + this.clientNumber + " : Unexpected type: " + response.getType());
+                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), "Client " + this.clientNumber + " : Unexpected type: " + response.getType());
                         break;
                 }
             } catch (ClassNotFoundException | InterruptedException | PlaceException e) {
-                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), "Client " + this.clientNumber + " : " + e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), "Client " + this.clientNumber + " : " + e.getMessage());
             } catch (IOException e) {
                 PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Client " + this.clientNumber + " disconnected from server");
                 PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), this.username + " logged out of server");
@@ -106,7 +107,7 @@ public class ClientHandler extends Thread {
             networkOut.writeUnshared(msg);
             networkOut.flush();
         } catch (IOException e) {
-            PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), "Client " + this.clientNumber + " : " + e.getMessage());
+            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), "Client " + this.clientNumber + " : " + e.getMessage());
         }
     }
 

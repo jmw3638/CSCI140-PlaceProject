@@ -6,7 +6,7 @@ import place.PlaceTile;
 import place.model.ClientModel;
 import place.model.NetworkClient;
 import place.model.Observer;
-import place.server.PlaceLogger;
+import place.PlaceLogger;
 
 import java.io.PrintWriter;
 import java.util.List;
@@ -104,7 +104,7 @@ public class PlacePTUI extends ConsoleApplication implements Observer<ClientMode
             }
             userOut.println();
         }
-        this.userOut.println("Type tile change as row, column, color: ");
+        this.userOut.println("Type tile change as row, column, color:");
     }
 
     /**

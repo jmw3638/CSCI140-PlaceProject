@@ -17,13 +17,24 @@ import javafx.scene.layout.VBox;
  */
 public class ZoomableScrollPane extends ScrollPane {
     private double scaleValue = 1.0;
+    /** the target ScrollPane node to make zoomable */
     private Node target;
+    /** the node to group with the target node */
     private Node zoomNode;
+    /** the dimension of the GUI board */
+    private int DIM;
 
-    public ZoomableScrollPane(Node target) {
+    /**
+     * Create a new zoomable ScrollPane.
+     * @param target the ScrollPane
+     * @param DIM the dimension of GUI board
+     */
+    public ZoomableScrollPane(Node target, int DIM) {
         super();
         this.target = target;
         this.zoomNode = new Group(target);
+        this.DIM = DIM;
+
         setContent(outerNode(zoomNode));
 
         setHbarPolicy(ScrollBarPolicy.NEVER);
@@ -36,6 +47,11 @@ public class ZoomableScrollPane extends ScrollPane {
         updateScale();
     }
 
+    /**
+     * Create the outer node.
+     * @param node the node
+     * @return the outer node
+     */
     private Node outerNode(Node node) {
         Node outerNode = centeredNode(node);
         outerNode.setOnScroll(e -> {
@@ -48,17 +64,30 @@ public class ZoomableScrollPane extends ScrollPane {
         return outerNode;
     }
 
+    /**
+     * Create the centered node.
+     * @param node the node
+     * @return the centered node
+     */
     private Node centeredNode(Node node) {
         VBox vBox = new VBox(node);
         vBox.setAlignment(Pos.CENTER);
         return vBox;
     }
 
+    /**
+     * Update the current scale value of the ScrollPane.
+     */
     private void updateScale() {
         target.setScaleX(scaleValue);
         target.setScaleY(scaleValue);
     }
 
+    /**
+     * Handle zooming upon a mouse scroll event.
+     * @param wheelDelta the mouse scroll data
+     * @param mousePoint the x, y position of the cursor
+     */
     private void onScroll(double wheelDelta, Point2D mousePoint) {
         double zoomIntensity = 0.05;
         double zoomFactor = Math.exp(wheelDelta * zoomIntensity);
@@ -72,7 +101,7 @@ public class ZoomableScrollPane extends ScrollPane {
 
         scaleValue = scaleValue * zoomFactor;
         if(scaleValue < 1.0) { scaleValue = 1.0; }
-        if(scaleValue < 10.0) {
+        if(scaleValue < (this.DIM / 10.0)) {
             updateScale();
             this.layout(); // refresh ScrollPane scroll positions & target bounds
             // convert target coordinates to zoomTarget coordinates

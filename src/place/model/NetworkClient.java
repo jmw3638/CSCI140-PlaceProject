@@ -4,7 +4,7 @@ import place.PlaceBoard;
 import place.PlaceException;
 import place.PlaceTile;
 import place.network.PlaceRequest;
-import place.server.PlaceLogger;
+import place.PlaceLogger;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -32,8 +32,8 @@ public class NetworkClient extends Thread {
     private boolean go;
     /** boolean value if the client is ready to place another tile */
     private boolean ready;
-    /** boolean value if using local server format, false if using cs.rit.edu servers */
-    private boolean localServerFormat;
+    /** boolean value if using client numbers, which are sent from the server */
+    private boolean usingClientNumbers;
 
     /**
      * Represents a client connected to the network.
@@ -50,7 +50,7 @@ public class NetworkClient extends Thread {
             this.model = model;
             this.go = true;
             this.ready = true;
-            this.localServerFormat = true;
+            this.usingClientNumbers = true;
 
             networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, username));
 
@@ -64,8 +64,8 @@ public class NetworkClient extends Thread {
                             this.clientNumber = (Integer) response.getData();
                         } catch(Exception e) {
                             this.clientNumber = -1;
-                            this.localServerFormat = false;
-                            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
+                            this.usingClientNumbers = false;
+                            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
                         }
                         PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Assigned client number: " + this.clientNumber);
                         PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Successfully logged in with username: " + username);
@@ -80,14 +80,14 @@ public class NetworkClient extends Thread {
                         proceed = true;
                         break;
                     default:
-                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), "Unexpected type: " + response.getType());
+                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), "Unexpected type: " + response.getType());
                         break;
                 }
             }
         } catch (ClassNotFoundException e) {
-            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
+            PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
         } catch (IOException e) {
-            PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), e.getMessage());
+            PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
         }
     }
 
@@ -111,13 +111,13 @@ public class NetworkClient extends Thread {
                         this.ready = true;
                         break;
                     default:
-                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), "Unexpected type: " + response.getType());
+                        PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), "Unexpected type: " + response.getType());
                         break;
                 }
             } catch (IOException e) {
-                PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
             } catch (ClassNotFoundException e) {
-                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
             }
         }
     }
@@ -132,16 +132,16 @@ public class NetworkClient extends Thread {
             PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(),"Client " + this.clientNumber + " chose: " + tile);
             if (this.model.isValidChange(tile.getRow(), tile.getCol(), tile.getColor().getNumber())) {
                 try {
-                    PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Sending: " + tile);
-                    if(localServerFormat) { this.ready = false; }
+                    PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Sending: " + tile.getColor().getName() + " tile to (" + tile.getRow() + ", " + tile.getCol() + ")");
+                    if(usingClientNumbers) { this.ready = false; }
                     networkOut.writeUnshared(new PlaceRequest<>(PlaceRequest.RequestType.CHANGE_TILE, tile));
                     networkOut.flush();
                 } catch (IOException e) {
-                    PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), e.getMessage());
+                    PlaceLogger.log(PlaceLogger.LogType.ERROR, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
                 }
             } else {
                 PlaceException e = new PlaceException("Invalid tile change: " + tile);
-                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), e.getMessage());
+                PlaceLogger.log(PlaceLogger.LogType.WARN, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
                 throw e;
             }
         } else { PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Failed to choose tile: on cool-down"); }
@@ -161,7 +161,7 @@ public class NetworkClient extends Thread {
             clientSocket.close();
             System.exit(0);
         } catch (IOException e) {
-            PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), e.getMessage());
+            PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
         }
     }
 }
