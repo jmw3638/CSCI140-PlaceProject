@@ -219,8 +219,6 @@ public class PlaceGUI extends Application implements Observer<ClientModel, Place
      * Updates the GUI and updates the specified tile.
      * @param tile the tile to update
      */
-    private void refresh(PlaceTile tile) {
-        Objects.requireNonNull(getElement(tile.getRow(), tile.getCol())).setTile(tile);
-    }
+    private void refresh(PlaceTile tile) { Objects.requireNonNull(getElement(tile.getRow(), tile.getCol())).setTile(tile); }
 }
 

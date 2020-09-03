@@ -113,9 +113,7 @@ public class PlacePTUI extends ConsoleApplication implements Observer<ClientMode
      * @param tile the tile to update (ignored)
      */
     @Override
-    public void update(ClientModel model, PlaceTile tile) {
-        this.refresh();
-    }
+    public void update(ClientModel model, PlaceTile tile) { this.refresh(); }
 
     /**
      * Close the network connection.
@@ -127,6 +125,8 @@ public class PlacePTUI extends ConsoleApplication implements Observer<ClientMode
         this.userIn.close();
         this.userOut.close();
         this.serverConnection.shutDown();
+
+        PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Terminated connection to server");
 
         System.exit(0);
     }

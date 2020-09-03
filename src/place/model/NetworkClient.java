@@ -156,9 +156,12 @@ public class NetworkClient extends Thread {
         try {
             PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Client " + this.clientNumber + " shutting down network connection");
             PlaceLogger.log(PlaceLogger.LogType.INFO, this.getClass().getName(), "Logging out of server");
+
             clientSocket.shutdownOutput();
             clientSocket.shutdownInput();
             clientSocket.close();
+
+            PlaceLogger.log(PlaceLogger.LogType.DEBUG, this.getClass().getName(), "Terminated connection to server");
             System.exit(0);
         } catch (IOException e) {
             PlaceLogger.log(PlaceLogger.LogType.FATAL, this.getClass().getName(), PlaceLogger.getLineNumber(), e.getMessage());
