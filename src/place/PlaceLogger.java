@@ -106,7 +106,7 @@ public class PlaceLogger {
                 if(DEBUG) { System.out.println(ANSI_BLUE + "DEBUG | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET); }
                 break;
             default:
-                System.out.println(ANSI_RED + "ERROR | " + time + " | " + PlaceLogger.class.getName() + " > Invalid logging type" + ANSI_RESET);
+                System.out.println(ANSI_RED + "UNKNOWN | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET);
                 break;
         }
     }
