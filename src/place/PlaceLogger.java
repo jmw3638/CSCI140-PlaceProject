@@ -94,7 +94,7 @@ public class PlaceLogger {
                 break;
             case WARN:
                 if(WARN) { System.out.println(ANSI_YELLOW + "WARN  | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET); }
-        break;
+                break;
             case ERROR:
                 if(ERROR) { System.out.println(ANSI_RED + "ERROR | " + time + " | " + className + lineNumber + " > " + msg + ANSI_RESET); }
                 break;
