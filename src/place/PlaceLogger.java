@@ -13,7 +13,7 @@ import java.util.Date;
  */
 public class PlaceLogger {
     /** enable or disable debugging messages */
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     /** enable or disable error messages */
     private static final boolean ERROR = true;
     /** enable or disable warning messages */
